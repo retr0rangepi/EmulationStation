@@ -22,18 +22,18 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down.svg" },
 	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left.svg" },
 	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right.svg" },
-	{ "Start",            true,  "START",              ":/help/button_start.svg" },
-	{ "Select",           true,  "SELECT",             ":/help/button_select.svg" },
+	{ "Start",            true,  "开始",              ":/help/button_start.svg" },
+	{ "Select",           true,  "选择",             ":/help/button_select.svg" },
 	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east.svg" },
 	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south.svg" },
 	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north.svg" },
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west.svg" },
-	{ "LeftShoulder",     true,  "LEFT SHOULDER",      ":/help/button_l.svg" },
-	{ "RightShoulder",    true,  "RIGHT SHOULDER",     ":/help/button_r.svg" },
-	{ "LeftTrigger",      true,  "LEFT TRIGGER",       ":/help/button_lt.svg" },
-	{ "RightTrigger",     true,  "RIGHT TRIGGER",      ":/help/button_rt.svg" },
-	{ "LeftThumb",        true,  "LEFT THUMB",         ":/help/analog_thumb.svg" },
-	{ "RightThumb",       true,  "RIGHT THUMB",        ":/help/analog_thumb.svg" },
+	{ "LeftShoulder",     true,  "LEFT SHOULDER L7",      ":/help/button_l.svg" },
+	{ "RightShoulder",    true,  "RIGHT SHOULDER R7",     ":/help/button_r.svg" },
+	{ "LeftTrigger",      true,  "LEFT TRIGGER L8",       ":/help/button_lt.svg" },
+	{ "RightTrigger",     true,  "RIGHT TRIGGER R8",      ":/help/button_rt.svg" },
+	{ "LeftThumb",        true,  "LEFT THUMB L9",         ":/help/analog_thumb.svg" },
+	{ "RightThumb",       true,  "RIGHT THUMB R9",        ":/help/analog_thumb.svg" },
 	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up.svg" },
 	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down.svg" },
 	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left.svg" },
@@ -42,7 +42,7 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down.svg" },
 	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left.svg" },
 	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right.svg" },
-	{ "HotKeyEnable",     true,  "HOTKEY ENABLE",      ":/help/button_hotkey.svg" }
+	{ "HotKeyEnable",     true,  "开启热键",      ":/help/button_hotkey.svg" }
 };
 
 //MasterVolUp and MasterVolDown are also hooked up, but do not appear on this screen.
@@ -171,7 +171,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		mSubtitle2->setOpacity(skippable * 255);
 	});
 
-	// make the first one say "PRESS ANYTHING" if we're re-configuring everything
+	// make the first one say "请按键" if we're re-configuring everything
 	if(mConfiguringAll)
 		setPress(mMappings.front());
 
@@ -283,7 +283,7 @@ void GuiInputConfig::rowDone()
 
 void GuiInputConfig::setPress(const std::shared_ptr<TextComponent>& text)
 {
-	text->setText("PRESS ANYTHING");
+	text->setText("请按键");
 	text->setColor(0x656565FF);
 }
 

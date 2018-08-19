@@ -9,26 +9,26 @@
 #include "SystemData.h"
 
 GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
-	mMenu(window, "SCRAPE NOW")
+	mMenu(window, "现在SCRAPE")
 {
 	addChild(&mMenu);
 
 	// add filters (with first one selected)
-	mFilters = std::make_shared< OptionListComponent<GameFilterFunc> >(mWindow, "SCRAPE THESE GAMES", false);
-	mFilters->add("All Games", 
+	mFilters = std::make_shared< OptionListComponent<GameFilterFunc> >(mWindow, "SCRAPE这些游戏", false);
+	mFilters->add("所有游戏", 
 		[](SystemData*, FileData*) -> bool { return true; }, false);
-	mFilters->add("Only missing image", 
-		[](SystemData*, FileData* g) -> bool { return g->metadata.get("image").empty(); }, true);
-	mMenu.addWithLabel("Filter", mFilters);
+	mFilters->add("未有图片游戏", 
+		[](SystemData*, FileData* g) -> bool { return g->metadata.get("图片").empty(); }, true);
+	mMenu.addWithLabel("过滤", mFilters);
 
 	//add systems (all with a platformid specified selected)
-	mSystems = std::make_shared< OptionListComponent<SystemData*> >(mWindow, "SCRAPE THESE SYSTEMS", true);
+	mSystems = std::make_shared< OptionListComponent<SystemData*> >(mWindow, "SCRAPE这些游戏系统", true);
 	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
 	{
 		if(!(*it)->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
 			mSystems->add((*it)->getFullName(), *it, !(*it)->getPlatformIds().empty());
 	}
-	mMenu.addWithLabel("Systems", mSystems);
+	mMenu.addWithLabel("游戏系统", mSystems);
 
 	mApproveResults = std::make_shared<SwitchComponent>(mWindow);
 	mApproveResults->setState(true);
@@ -49,8 +49,8 @@ void GuiScraperStart::pressedStart()
 		{
 			mWindow->pushGui(new GuiMsgBox(mWindow, 
 				Utils::String::toUpper("Warning: some of your selected systems do not have a platform set. Results may be even more inaccurate than usual!\nContinue anyway?"), 
-				"YES", std::bind(&GuiScraperStart::start, this), 
-				"NO", nullptr));
+				"是", std::bind(&GuiScraperStart::start, this), 
+				"否", nullptr));
 			return;
 		}
 	}

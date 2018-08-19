@@ -16,7 +16,7 @@ const int logoBuffersRight[] = { 1, 2, 5 };
 
 SystemView::SystemView(Window* window) : IList<SystemViewData, SystemData*>(window, LIST_SCROLL_STYLE_SLOW, LIST_ALWAYS_LOOP),
 										 mViewNeedsReload(true),
-										 mSystemInfo(window, "SYSTEM INFO", Font::get(FONT_SIZE_SMALL), 0x33333300, ALIGN_CENTER)
+										 mSystemInfo(window, "系统信息", Font::get(FONT_SIZE_SMALL), 0x33333300, ALIGN_CENTER)
 {
 	mCamOffset = 0;
 	mExtrasCamOffset = 0;
@@ -257,9 +257,9 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 		std::stringstream ss;
 
 		if (!getSelected()->isGameSystem())
-			ss << "CONFIGURATION";
+			ss << "设置";
 		else
-			ss << gameCount << " GAMES AVAILABLE";
+			ss << gameCount << "个有效游戏";
 
 		mSystemInfo.setText(ss.str());
 	}, false, 1);
