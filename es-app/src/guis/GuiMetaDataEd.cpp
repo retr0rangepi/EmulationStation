@@ -142,14 +142,14 @@ GuiMetaDataEd::GuiMetaDataEd(Window* window, MetaDataList* md, const std::vector
 	if(!scraperParams.system->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
 		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "SCRAPE", "scrape", std::bind(&GuiMetaDataEd::fetch, this)));
 
-	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "SAVE", "save", [&] { save(); delete this; }));
-	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "CANCEL", "cancel", [&] { delete this; }));
+	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "ZAPISZ", "zapisz", [&] { save(); delete this; }));
+	buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "ANULUJ", "anuluj", [&] { delete this; }));
 
 	if(mDeleteFunc)
 	{
 		auto deleteFileAndSelf = [&] { mDeleteFunc(); delete this; };
-		auto deleteBtnFunc = [this, deleteFileAndSelf] { mWindow->pushGui(new GuiMsgBox(mWindow, "THIS WILL DELETE A FILE!\nARE YOU SURE?", "YES", deleteFileAndSelf, "NO", nullptr)); };
-		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "DELETE", "delete", deleteBtnFunc));
+		auto deleteBtnFunc = [this, deleteFileAndSelf] { mWindow->pushGui(new GuiMsgBox(mWindow, "THIS WILL DELETE A FILE!\nARE YOU SURE?", "TAK", deleteFileAndSelf, "NIE", nullptr)); };
+		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "USUŃ", "usuń", deleteBtnFunc));
 	}
 
 	mButtons = makeButtonGrid(mWindow, buttons);
@@ -250,9 +250,9 @@ void GuiMetaDataEd::close(bool closeAllWindows)
 	{
 		// changes were made, ask if the user wants to save them
 		mWindow->pushGui(new GuiMsgBox(mWindow,
-			"SAVE CHANGES?",
-			"YES", [this, closeFunc] { save(); closeFunc(); },
-			"NO", closeFunc
+			"ZAPISAĆ ZMIANY ?",
+			"TAK", [this, closeFunc] { save(); closeFunc(); },
+			"NIE", closeFunc
 		));
 	}else{
 		closeFunc();

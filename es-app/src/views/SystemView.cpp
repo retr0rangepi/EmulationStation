@@ -257,9 +257,9 @@ void SystemView::onCursorChanged(const CursorState& /*state*/)
 		std::stringstream ss;
 
 		if (!getSelected()->isGameSystem())
-			ss << "CONFIGURATION";
+			ss << "KONFIGURACJA";
 		else
-			ss << gameCount << " GAMES AVAILABLE";
+			ss << gameCount << "Dostępne gry";
 
 		mSystemInfo.setText(ss.str());
 	}, false, 1);

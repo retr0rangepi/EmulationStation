@@ -12,7 +12,7 @@
 #include "SystemData.h"
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : GuiComponent(window),
-	mSystem(system), mMenu(window, "OPTIONS"), fromPlaceholder(false), mFiltersChanged(false)
+	mSystem(system), mMenu(window, "OPCJE"), fromPlaceholder(false), mFiltersChanged(false)
 {
 	addChild(&mMenu);
 
@@ -67,14 +67,14 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : Gui
 		mMenu.addRow(row);
 
 		// sort list by
-		mListSort = std::make_shared<SortList>(mWindow, "SORT GAMES BY", false);
+		mListSort = std::make_shared<SortList>(mWindow, "SORTUJ LISTE GIER", false);
 		for(unsigned int i = 0; i < FileSorts::SortTypes.size(); i++)
 		{
 			const FileData::SortType& sort = FileSorts::SortTypes.at(i);
 			mListSort->add(sort.description, &sort, i == 0); // TODO - actually make the sort type persistent
 		}
 
-		mMenu.addWithLabel("SORT GAMES BY", mListSort);
+		mMenu.addWithLabel("SORTUJ LISTE GIER", mListSort);
 	}
 	// show filtered menu
 	if(!Settings::getInstance()->getBool("ForceDisableFilters"))

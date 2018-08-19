@@ -15,7 +15,7 @@ GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
 
 	// add filters (with first one selected)
 	mFilters = std::make_shared< OptionListComponent<GameFilterFunc> >(mWindow, "SCRAPE THESE GAMES", false);
-	mFilters->add("All Games", 
+	mFilters->add("Wszystkie gry", 
 		[](SystemData*, FileData*) -> bool { return true; }, false);
 	mFilters->add("Only missing image", 
 		[](SystemData*, FileData* g) -> bool { return g->metadata.get("image").empty(); }, true);
@@ -49,8 +49,8 @@ void GuiScraperStart::pressedStart()
 		{
 			mWindow->pushGui(new GuiMsgBox(mWindow, 
 				Utils::String::toUpper("Warning: some of your selected systems do not have a platform set. Results may be even more inaccurate than usual!\nContinue anyway?"), 
-				"YES", std::bind(&GuiScraperStart::start, this), 
-				"NO", nullptr));
+				"TAK", std::bind(&GuiScraperStart::start, this), 
+				"NIE", nullptr));
 			return;
 		}
 	}
@@ -65,7 +65,7 @@ void GuiScraperStart::start()
 	if(searches.empty())
 	{
 		mWindow->pushGui(new GuiMsgBox(mWindow,
-			"NO GAMES FIT THAT CRITERIA."));
+			"Brak gier spełniających kryteria"));
 	}else{
 		GuiScraperMulti* gsm = new GuiScraperMulti(mWindow, searches, mApproveResults->getState());
 		mWindow->pushGui(gsm);
