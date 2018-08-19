@@ -201,18 +201,18 @@ bool loadSystemConfigFile(const char** errorString)
 	if(!SystemData::loadConfig())
 	{
 		LOG(LogError) << "Error while parsing systems configuration file!";
-		*errorString = "IT LOOKS LIKE YOUR SYSTEMS CONFIGURATION FILE HAS NOT BEEN SET UP OR IS INVALID. YOU'LL NEED TO DO THIS BY HAND, UNFORTUNATELY.\n\n"
-			"VISIT EMULATIONSTATION.ORG FOR MORE INFORMATION.";
+		*errorString = "IL SEMBLERAIT QUE VOTRE FICHIER DE CONFIGURATION SYSTÈMES N´AIT PAS ÉTÉ INSTALLÉ OU EST INVALIDE, VOUS DEVEZ LE FAIRE MANUELLEMENT, MALHEUREUSEMENT. \n\n"
+			"VISITEZ EMULATIONSTATION.ORG POUR PLUS D´INFORMATION";
 		return false;
 	}
 
 	if(SystemData::sSystemVector.size() == 0)
 	{
 		LOG(LogError) << "No systems found! Does at least one system have a game present? (check that extensions match!)\n(Also, make sure you've updated your es_systems.cfg for XML!)";
-		*errorString = "WE CAN'T FIND ANY SYSTEMS!\n"
-			"CHECK THAT YOUR PATHS ARE CORRECT IN THE SYSTEMS CONFIGURATION FILE, "
+		*errorString = "NOUS N'AVONS TROUVÉS AUCUN SYSTÈMES! \n"
+			"VERIFIEZ QUE LE CHEMIN EST CORRECTE DANS LE FICHIER DE CONFIGURATION SYSTÈME,"
 			"AND YOUR GAME DIRECTORY HAS AT LEAST ONE GAME WITH THE CORRECT EXTENSION.\n\n"
-			"VISIT EMULATIONSTATION.ORG FOR MORE INFORMATION.";
+			"VISITEZ EMULATIONSTATION.ORG POUR PLUS D´INFORMATION";
 		return false;
 	}
 
@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
 		// we can't handle es_systems.cfg file problems inside ES itself, so display the error message then quit
 		window.pushGui(new GuiMsgBox(&window,
 			errorMsg,
-			"QUIT", [] {
+			"QUITTER", [] {
 				SDL_Event* quit = new SDL_Event();
 				quit->type = SDL_QUIT;
 				SDL_PushEvent(quit);

@@ -9,7 +9,7 @@ GuiSettings::GuiSettings(Window* window, const char* title) : GuiComponent(windo
 {
 	addChild(&mMenu);
 
-	mMenu.addButton("BACK", "go back", [this] { delete this; });
+	mMenu.addButton("RETOUR", "revenir", [this] { delete this; });
 
 	setSize((float)Renderer::getScreenWidth(), (float)Renderer::getScreenHeight());
 	mMenu.setPosition((mSize.x() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
@@ -54,7 +54,7 @@ bool GuiSettings::input(InputConfig* config, Input input)
 HelpStyle GuiSettings::getHelpStyle()
 {
 	HelpStyle style = HelpStyle();
-	style.applyTheme(ViewController::get()->getState().getSystem()->getTheme(), "system");
+	style.applyTheme(ViewController::get()->getState().getSystem()->getTheme(), "système");
 	return style;
 }
 
