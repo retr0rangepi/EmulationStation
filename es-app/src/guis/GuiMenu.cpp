@@ -29,7 +29,7 @@ GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.2
                         { system("startx 2> /dev/null"); }, "ΟΧΙ", nullptr) ); });
 
 	if (isFullUI)
-		addEntry(""ΕΠΕΞΕΡΓΑΣΙΑ ΣΥΣΚΕΥΩΝ ΕΙΣΟΔΟΥ", 0x777777FF, true, [this] { openConfigInput(); });
+		addEntry("ΕΠΕΞΕΡΓΑΣΙΑ ΣΥΣΚΕΥΩΝ ΕΙΣΟΔΟΥ", 0x777777FF, true, [this] { openConfigInput(); });
 
 	if (isFullUI)
 		addEntry("SCRAPER", 0x777777FF, true, [this] { openScraperSettings(); });
