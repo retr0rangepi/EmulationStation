@@ -12,11 +12,11 @@
 #include "SystemData.h"
 
 GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : GuiComponent(window),
-	mSystem(system), mMenu(window, "OPTIONS"), fromPlaceholder(false), mFiltersChanged(false)
+	mSystem(system), mMenu(window, "Opciones"), fromPlaceholder(false), mFiltersChanged(false)
 {
 	addChild(&mMenu);
 
-	// check it's not a placeholder folder - if it is, only show "Filter Options"
+	// check it's not a placeholder folder - if it is, only show "Filtrar opciones"
 	FileData* file = getGamelist()->getCursor();
 	fromPlaceholder = file->isPlaceHolder();
 	ComponentListRow row;
@@ -67,20 +67,20 @@ GuiGamelistOptions::GuiGamelistOptions(Window* window, SystemData* system) : Gui
 		mMenu.addRow(row);
 
 		// sort list by
-		mListSort = std::make_shared<SortList>(mWindow, "SORT GAMES BY", false);
+		mListSort = std::make_shared<SortList>(mWindow, "ORDENAR JUEGOS POR", false);
 		for(unsigned int i = 0; i < FileSorts::SortTypes.size(); i++)
 		{
 			const FileData::SortType& sort = FileSorts::SortTypes.at(i);
 			mListSort->add(sort.description, &sort, i == 0); // TODO - actually make the sort type persistent
 		}
 
-		mMenu.addWithLabel("SORT GAMES BY", mListSort);
+		mMenu.addWithLabel("ORDENAR JUEGOS POR", mListSort);
 	}
 	// show filtered menu
 	if(!Settings::getInstance()->getBool("ForceDisableFilters"))
 	{
 		row.elements.clear();
-		row.addElement(std::make_shared<TextComponent>(mWindow, "FILTER GAMELIST", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		row.addElement(std::make_shared<TextComponent>(mWindow, "FILTRAR LISTA DE JUEGO", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 		row.addElement(makeArrow(mWindow), false);
 		row.makeAcceptInputHandler(std::bind(&GuiGamelistOptions::openGamelistFilter, this));
 		mMenu.addRow(row);		
