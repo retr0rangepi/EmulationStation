@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
 		// we can't handle es_systems.cfg file problems inside ES itself, so display the error message then quit
 		window.pushGui(new GuiMsgBox(&window,
 			errorMsg,
-			"QUIT", [] {
+			"Afslut", [] {
 				SDL_Event* quit = new SDL_Event();
 				quit->type = SDL_QUIT;
 				SDL_PushEvent(quit);
