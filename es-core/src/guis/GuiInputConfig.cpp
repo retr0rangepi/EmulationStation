@@ -18,31 +18,31 @@ struct InputConfigStructure
 static const int inputCount = 25;
 static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 {
-	{ "Up",               false, "D-PAD UP",           ":/help/dpad_up.svg" },
-	{ "Down",             false, "D-PAD DOWN",         ":/help/dpad_down.svg" },
-	{ "Left",             false, "D-PAD LEFT",         ":/help/dpad_left.svg" },
-	{ "Right",            false, "D-PAD RIGHT",        ":/help/dpad_right.svg" },
+	{ "Up",               false, "SU",           ":/help/dpad_up.svg" },
+	{ "Down",             false, "GIU",         ":/help/dpad_down.svg" },
+	{ "Left",             false, "SINISTRA",         ":/help/dpad_left.svg" },
+	{ "Right",            false, "DESTRA",        ":/help/dpad_right.svg" },
 	{ "Start",            true,  "START",              ":/help/button_start.svg" },
 	{ "Select",           true,  "SELECT",             ":/help/button_select.svg" },
 	{ "A",                false, "BUTTON A / EAST",    ":/help/buttons_east.svg" },
 	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south.svg" },
 	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north.svg" },
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west.svg" },
-	{ "LeftShoulder",     true,  "LEFT SHOULDER",      ":/help/button_l.svg" },
-	{ "RightShoulder",    true,  "RIGHT SHOULDER",     ":/help/button_r.svg" },
-	{ "LeftTrigger",      true,  "LEFT TRIGGER",       ":/help/button_lt.svg" },
-	{ "RightTrigger",     true,  "RIGHT TRIGGER",      ":/help/button_rt.svg" },
-	{ "LeftThumb",        true,  "LEFT THUMB",         ":/help/analog_thumb.svg" },
-	{ "RightThumb",       true,  "RIGHT THUMB",        ":/help/analog_thumb.svg" },
-	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up.svg" },
-	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down.svg" },
-	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left.svg" },
-	{ "LeftAnalogRight",  true,  "LEFT ANALOG RIGHT",  ":/help/analog_right.svg" },
-	{ "RightAnalogUp",    true,  "RIGHT ANALOG UP",    ":/help/analog_up.svg" },
-	{ "RightAnalogDown",  true,  "RIGHT ANALOG DOWN",  ":/help/analog_down.svg" },
-	{ "RightAnalogLeft",  true,  "RIGHT ANALOG LEFT",  ":/help/analog_left.svg" },
-	{ "RightAnalogRight", true,  "RIGHT ANALOG RIGHT", ":/help/analog_right.svg" },
-	{ "HotKeyEnable",     true,  "HOTKEY ENABLE",      ":/help/button_hotkey.svg" }
+	{ "LeftShoulder",     true,  "SUPERIORE SINISTRO",      ":/help/button_l.svg" },
+	{ "RightShoulder",    true,  "SUPERIORE DESTRO",     ":/help/button_r.svg" },
+	{ "LeftTrigger",      true,  "GRILLETTO SINISTRO",       ":/help/button_lt.svg" },
+	{ "RightTrigger",     true,  "GRILLETTO DESTRO",      ":/help/button_rt.svg" },
+	{ "LeftThumb",        true,  "POLLICE SINISTRO",         ":/help/analog_thumb.svg" },
+	{ "RightThumb",       true,  "POLLICE DESTRO",        ":/help/analog_thumb.svg" },
+	{ "LeftAnalogUp",     true,  "ANALOGICO SINISTRO SU",     ":/help/analog_up.svg" },
+	{ "LeftAnalogDown",   true,  "ANALOGICO SINISTRO GIU",   ":/help/analog_down.svg" },
+	{ "LeftAnalogLeft",   true,  "ANALOGICO SINISTRO SINISTRA",   ":/help/analog_left.svg" },
+	{ "LeftAnalogRight",  true,  "ANALOGICO SINISTRO DESTRA",  ":/help/analog_right.svg" },
+	{ "RightAnalogUp",    true,  "ANALOGICO DESTRO SU",    ":/help/analog_up.svg" },
+	{ "RightAnalogDown",  true,  "ANALOGICO DESTRO GIU",  ":/help/analog_down.svg" },
+	{ "RightAnalogLeft",  true,  "ANALOGICO DESTRO SINISTRA",  ":/help/analog_left.svg" },
+	{ "RightAnalogRight", true,  "ANALOGICO DESTRO DESTRA", ":/help/analog_right.svg" },
+	{ "HotKeyEnable",     true,  "TASTO HOTKEY",      ":/help/button_hotkey.svg" }
 };
 
 //MasterVolUp and MasterVolDown are also hooked up, but do not appear on this screen.
@@ -68,12 +68,12 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	// 0 is a spacer row
 	mGrid.setEntry(std::make_shared<GuiComponent>(mWindow), Vector2i(0, 0), false);
 
-	mTitle = std::make_shared<TextComponent>(mWindow, "CONFIGURING", Font::get(FONT_SIZE_LARGE), 0x555555FF, ALIGN_CENTER);
+	mTitle = std::make_shared<TextComponent>(mWindow, "CONFIGURANDO", Font::get(FONT_SIZE_LARGE), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mTitle, Vector2i(0, 1), false, true);
 	
 	std::stringstream ss;
 	if(target->getDeviceId() == DEVICE_KEYBOARD)
-		ss << "KEYBOARD";
+		ss << "TASTIERA";
 	else if(target->getDeviceId() == DEVICE_CEC)
 		ss << "CEC";
 	else
@@ -81,7 +81,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(ss.str()), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
 
-	mSubtitle2 = std::make_shared<TextComponent>(mWindow, "HOLD ANY BUTTON TO SKIP", Font::get(FONT_SIZE_SMALL), 0x99999900, ALIGN_CENTER);
+	mSubtitle2 = std::make_shared<TextComponent>(mWindow, "TIENI PREMUTO PER SALTARE", Font::get(FONT_SIZE_SMALL), 0x99999900, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle2, Vector2i(0, 3), false, true);
 
 	// 4 is a spacer row
@@ -107,7 +107,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		auto text = std::make_shared<TextComponent>(mWindow, GUI_INPUT_CONFIG_LIST[i].dispName, Font::get(FONT_SIZE_MEDIUM), 0x777777FF);
 		row.addElement(text, true);
 
-		auto mapping = std::make_shared<TextComponent>(mWindow, "-NOT DEFINED-", Font::get(FONT_SIZE_MEDIUM, FONT_PATH_LIGHT), 0x999999FF, ALIGN_RIGHT);
+		auto mapping = std::make_shared<TextComponent>(mWindow, "NON DEFINITO", Font::get(FONT_SIZE_MEDIUM, FONT_PATH_LIGHT), 0x999999FF, ALIGN_RIGHT);
 		setNotDefined(mapping); // overrides text and color set above
 		row.addElement(mapping, true);
 		mMappings.push_back(mapping);
@@ -171,7 +171,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		mSubtitle2->setOpacity(skippable * 255);
 	});
 
-	// make the first one say "PRESS ANYTHING" if we're re-configuring everything
+	// make the first one say "PREMI UN TASTO" if we're re-configuring everything
 	if(mConfiguringAll)
 		setPress(mMappings.front());
 
@@ -189,7 +189,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		if (!mTargetConfig->getInputByName("HotKeyEnable", &input)) {
 			mWindow->pushGui(new GuiMsgBox(mWindow,
 				"YOU DIDN'T CHOOSE A HOTKEY ENABLE BUTTON. THIS IS REQUIRED FOR EXITING GAMES WITH A CONTROLLER. DO YOU WANT TO USE THE SELECT BUTTON DEFAULT ? PLEASE ANSWER YES TO USE SELECT OR NO TO NOT SET A HOTKEY ENABLE BUTTON.",
-				"YES", [this, okFunction] {
+				"SI", [this, okFunction] {
 					Input input;
 					mTargetConfig->getInputByName("Select", &input);
 					mTargetConfig->mapInput("HotKeyEnable", input);
@@ -251,7 +251,7 @@ void GuiInputConfig::update(int deltaTime)
 				// crossed the second boundary, update text
 				const auto& text = mMappings.at(mHeldInputId);
 				std::stringstream ss;
-				ss << "HOLD FOR " << HOLD_TO_SKIP_MS/1000 - curSec << "S TO SKIP";
+				ss << "PREMI PER" << HOLD_TO_SKIP_MS/1000 - curSec << "S PER SALTARE";
 				text->setText(ss.str());
 				text->setColor(0x777777FF);
 			}
@@ -283,13 +283,13 @@ void GuiInputConfig::rowDone()
 
 void GuiInputConfig::setPress(const std::shared_ptr<TextComponent>& text)
 {
-	text->setText("PRESS ANYTHING");
+	text->setText("PREMI UN TASTO");
 	text->setColor(0x656565FF);
 }
 
 void GuiInputConfig::setNotDefined(const std::shared_ptr<TextComponent>& text)
 {
-	text->setText("-NOT DEFINED-");
+	text->setText("NON DEFINITO");
 	text->setColor(0x999999FF);
 }
 
@@ -301,7 +301,7 @@ void GuiInputConfig::setAssignedTo(const std::shared_ptr<TextComponent>& text, I
 
 void GuiInputConfig::error(const std::shared_ptr<TextComponent>& text, const std::string& /*msg*/)
 {
-	text->setText("ALREADY TAKEN");
+	text->setText("GIA SCELTO");
 	text->setColor(0x656565FF);
 }
 
