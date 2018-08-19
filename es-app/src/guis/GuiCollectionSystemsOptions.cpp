@@ -27,10 +27,10 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	std::vector<std::string> unusedFolders = CollectionSystemManager::get()->getUnusedSystemsFromTheme();
 	if (unusedFolders.size() > 0)
 	{
-		addEntry("CREATE NEW CUSTOM COLLECTION FROM THEME", 0x777777FF, true,
+		addEntry("CREEER NIEUWE PERSOONLIJKE GAME VERZAMELING", 0x777777FF, true,
 		[this, unusedFolders] {
-			auto s = new GuiSettings(mWindow, "SELECT THEME FOLDER");
-			std::shared_ptr< OptionListComponent<std::string> > folderThemes = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT THEME FOLDER", true);
+			auto s = new GuiSettings(mWindow, "SELECTEER THEMA MAP");
+			std::shared_ptr< OptionListComponent<std::string> > folderThemes = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECTEER THEMA MAP", true);
 
 			// add Custom Systems
 			for(auto it = unusedFolders.cbegin() ; it != unusedFolders.cend() ; it++ )
@@ -52,7 +52,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	}
 
 	ComponentListRow row;
-	row.addElement(std::make_shared<TextComponent>(mWindow, "CREATE NEW CUSTOM COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	row.addElement(std::make_shared<TextComponent>(mWindow, "CREEER NIEUWE PERSOONLIJKE GAME VERZAMELING", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 	auto createCustomCollection = [this](const std::string& newVal) {
 		std::string name = newVal;
 		// we need to store the first Gui and remove it, as it'll be deleted by the actual Gui
@@ -69,11 +69,11 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 	bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow);
 	bundleCustomCollections->setState(Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
-	mMenu.addWithLabel("GROUP UNTHEMED CUSTOM COLLECTIONS", bundleCustomCollections);
+	mMenu.addWithLabel("GROEPEER NIET GERPERSONALISEERDE GAME VERZAMELING", bundleCustomCollections);
 
 	sortAllSystemsSwitch = std::make_shared<SwitchComponent>(mWindow);
 	sortAllSystemsSwitch->setState(Settings::getInstance()->getBool("SortAllSystems"));
-	mMenu.addWithLabel("SORT CUSTOM COLLECTIONS AND SYSTEMS", sortAllSystemsSwitch);
+	mMenu.addWithLabel("SORTEER PERSONLIJKE GAME VERZAMELING EN SYSTEMEN", sortAllSystemsSwitch);
 
 	if(CollectionSystemManager::get()->isEditing())
 	{
@@ -146,7 +146,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 	{
 		autoOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
-	mMenu.addWithLabel("AUTOMATIC GAME COLLECTIONS", autoOptionList);
+	mMenu.addWithLabel("AUTOMATISCHE GAME VERZAMELING", autoOptionList);
 
 	std::map<std::string, CollectionSystemData> customSystems = CollectionSystemManager::get()->getCustomCollectionSystems();
 
@@ -157,7 +157,7 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 	{
 		customOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
-	mMenu.addWithLabel("CUSTOM GAME COLLECTIONS", customOptionList);
+	mMenu.addWithLabel("PERSOONLIJKE GAME VERZAMELING", customOptionList);
 }
 
 void GuiCollectionSystemsOptions::applySettings()

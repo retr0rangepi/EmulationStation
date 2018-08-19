@@ -32,7 +32,7 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 	mTitle = std::make_shared<TextComponent>(mWindow, "SCRAPING IN PROGRESS", Font::get(FONT_SIZE_LARGE), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mTitle, Vector2i(0, 0), false, true);
 
-	mSystem = std::make_shared<TextComponent>(mWindow, "SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF, ALIGN_CENTER);
+	mSystem = std::make_shared<TextComponent>(mWindow, "SYSTEEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF, ALIGN_CENTER);
 	mGrid.setEntry(mSystem, Vector2i(0, 1), false, true);
 
 	mSubtitle = std::make_shared<TextComponent>(mWindow, "subtitle text", Font::get(FONT_SIZE_SMALL), 0x888888FF, ALIGN_CENTER);
@@ -49,12 +49,12 @@ GuiScraperMulti::GuiScraperMulti(Window* window, const std::queue<ScraperSearchP
 
 	if(approveResults)
 	{
-		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "INPUT", "search", [&] {
+		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "INPUT", "zoeken", [&] {
 			mSearchComp->openInputScreen(mSearchQueue.front());
 			mGrid.resetCursor();
 		}));
 
-		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "SKIP", "skip", [&] {
+		buttons.push_back(std::make_shared<ButtonComponent>(mWindow, "OVERSLAAN", "skip", [&] {
 			skip();
 			mGrid.resetCursor();
 		}));
@@ -103,7 +103,7 @@ void GuiScraperMulti::doNextSearch()
 
 	// update subtitle
 	ss.str(""); // clear
-	ss << "GAME " << (mCurrentGame + 1) << " OF " << mTotalGames << " - " << Utils::String::toUpper(Utils::FileSystem::getFileName(mSearchQueue.front().game->getPath()));
+	ss << "GAME"<< (mCurrentGame + 1) << "VAN"<< mTotalGames << "-" << Utils::String::toUpper(Utils::FileSystem::getFileName(mSearchQueue.front().game->getPath()));
 	mSubtitle->setText(ss.str());
 
 	mSearchComp->search(mSearchQueue.front());
@@ -135,12 +135,12 @@ void GuiScraperMulti::finish()
 	std::stringstream ss;
 	if(mTotalSuccessful == 0)
 	{
-		ss << "NO GAMES WERE SCRAPED.";
+		ss << "GEEN GAMES GESCRAPED";
 	}else{
-		ss << mTotalSuccessful << " GAME" << ((mTotalSuccessful > 1) ? "S" : "") << " SUCCESSFULLY SCRAPED!";
+		ss << mTotalSuccessful << "SPEL"<< ((mTotalSuccessful > 1) ? "S" : "") << "";
 
 		if(mTotalSkipped > 0)
-			ss << "\n" << mTotalSkipped << " GAME" << ((mTotalSkipped > 1) ? "S" : "") << " SKIPPED.";
+			ss << "\n" << mTotalSkipped << "SPEL"<< ((mTotalSkipped > 1) ? "S" : "") << "OVERGESLAGEN";
 	}
 
 	mWindow->pushGui(new GuiMsgBox(mWindow, ss.str(),

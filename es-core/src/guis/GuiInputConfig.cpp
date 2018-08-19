@@ -28,12 +28,12 @@ static const InputConfigStructure GUI_INPUT_CONFIG_LIST[inputCount] =
 	{ "B",                true,  "BUTTON B / SOUTH",   ":/help/buttons_south.svg" },
 	{ "X",                true,  "BUTTON X / NORTH",   ":/help/buttons_north.svg" },
 	{ "Y",                true,  "BUTTON Y / WEST",    ":/help/buttons_west.svg" },
-	{ "LeftShoulder",     true,  "LEFT SHOULDER",      ":/help/button_l.svg" },
-	{ "RightShoulder",    true,  "RIGHT SHOULDER",     ":/help/button_r.svg" },
-	{ "LeftTrigger",      true,  "LEFT TRIGGER",       ":/help/button_lt.svg" },
-	{ "RightTrigger",     true,  "RIGHT TRIGGER",      ":/help/button_rt.svg" },
-	{ "LeftThumb",        true,  "LEFT THUMB",         ":/help/analog_thumb.svg" },
-	{ "RightThumb",       true,  "RIGHT THUMB",        ":/help/analog_thumb.svg" },
+	{ "LeftShoulder",     true,  "LEFT SHOULDER L4",      ":/help/button_l.svg" },
+	{ "RightShoulder",    true,  "RIGHT SHOULDER R4",     ":/help/button_r.svg" },
+	{ "LeftTrigger",      true,  "LEFT TRIGGER L5",       ":/help/button_lt.svg" },
+	{ "RightTrigger",     true,  "RIGHT TRIGGER R5",      ":/help/button_rt.svg" },
+	{ "LeftThumb",        true,  "LEFT THUMB L6",         ":/help/analog_thumb.svg" },
+	{ "RightThumb",       true,  "RIGHT THUMB R6",        ":/help/analog_thumb.svg" },
 	{ "LeftAnalogUp",     true,  "LEFT ANALOG UP",     ":/help/analog_up.svg" },
 	{ "LeftAnalogDown",   true,  "LEFT ANALOG DOWN",   ":/help/analog_down.svg" },
 	{ "LeftAnalogLeft",   true,  "LEFT ANALOG LEFT",   ":/help/analog_left.svg" },
@@ -171,7 +171,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 		mSubtitle2->setOpacity(skippable * 255);
 	});
 
-	// make the first one say "PRESS ANYTHING" if we're re-configuring everything
+	// make the first one say "DRUK OP EEN TOETS" if we're re-configuring everything
 	if(mConfiguringAll)
 		setPress(mMappings.front());
 
@@ -283,7 +283,7 @@ void GuiInputConfig::rowDone()
 
 void GuiInputConfig::setPress(const std::shared_ptr<TextComponent>& text)
 {
-	text->setText("PRESS ANYTHING");
+	text->setText("DRUK OP EEN TOETS");
 	text->setColor(0x656565FF);
 }
 
