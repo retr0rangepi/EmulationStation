@@ -4,7 +4,7 @@
 #include "views/UIModeController.h"
 #include "SystemData.h"
 
-GuiGamelistFilter::GuiGamelistFilter(Window* window, SystemData* system) : GuiComponent(window), mMenu(window, "FILTER GAMELIST BY"), mSystem(system)
+GuiGamelistFilter::GuiGamelistFilter(Window* window, SystemData* system) : GuiComponent(window), mMenu(window, "ФИЛЬТР СПИСКА ИГР ПО"), mSystem(system)
 {
 	initializeMenu();
 }
@@ -21,7 +21,7 @@ void GuiGamelistFilter::initializeMenu()
 
 	// show filtered menu
 	row.elements.clear();
-	row.addElement(std::make_shared<TextComponent>(mWindow, "RESET ALL FILTERS", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	row.addElement(std::make_shared<TextComponent>(mWindow, "СБРОСИТЬ ВСЕ ФИЛЬТРЫ", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 	row.makeAcceptInputHandler(std::bind(&GuiGamelistFilter::resetAllFilters, this));
 	mMenu.addRow(row);
 	row.elements.clear();

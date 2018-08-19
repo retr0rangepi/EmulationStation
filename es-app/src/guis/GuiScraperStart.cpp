@@ -9,32 +9,32 @@
 #include "SystemData.h"
 
 GuiScraperStart::GuiScraperStart(Window* window) : GuiComponent(window),
-	mMenu(window, "SCRAPE NOW")
+	mMenu(window, "ЗАГРУЗИТЬ ОПИСАНИЯ СЕЙЧАС")
 {
 	addChild(&mMenu);
 
 	// add filters (with first one selected)
-	mFilters = std::make_shared< OptionListComponent<GameFilterFunc> >(mWindow, "SCRAPE THESE GAMES", false);
-	mFilters->add("All Games", 
+	mFilters = std::make_shared< OptionListComponent<GameFilterFunc> >(mWindow, "ЗАГРУЗИТЬ ОПИСАНИЯ ЭТИХ ИГР", false);
+	mFilters->add("Все игры", 
 		[](SystemData*, FileData*) -> bool { return true; }, false);
-	mFilters->add("Only missing image", 
-		[](SystemData*, FileData* g) -> bool { return g->metadata.get("image").empty(); }, true);
-	mMenu.addWithLabel("Filter", mFilters);
+	mFilters->add("Только отсутствующие изображения", 
+		[](SystemData*, FileData* g) -> bool { return g->metadata.get("изображение").empty(); }, true);
+	mMenu.addWithLabel("Фильтр", mFilters);
 
 	//add systems (all with a platformid specified selected)
-	mSystems = std::make_shared< OptionListComponent<SystemData*> >(mWindow, "SCRAPE THESE SYSTEMS", true);
+	mSystems = std::make_shared< OptionListComponent<SystemData*> >(mWindow, "ЗАГРУЗИТЬ ОПИСАНИЯ ЭТИХ СИСТЕМ", true);
 	for(auto it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); it++)
 	{
 		if(!(*it)->hasPlatformId(PlatformIds::PLATFORM_IGNORE))
 			mSystems->add((*it)->getFullName(), *it, !(*it)->getPlatformIds().empty());
 	}
-	mMenu.addWithLabel("Systems", mSystems);
+	mMenu.addWithLabel("Системы", mSystems);
 
 	mApproveResults = std::make_shared<SwitchComponent>(mWindow);
 	mApproveResults->setState(true);
-	mMenu.addWithLabel("User decides on conflicts", mApproveResults);
+	mMenu.addWithLabel("При конфликте спрашивать", mApproveResults);
 
-	mMenu.addButton("START", "start", std::bind(&GuiScraperStart::pressedStart, this));
+	mMenu.addButton("СТАРТ", "start", std::bind(&GuiScraperStart::pressedStart, this));
 	mMenu.addButton("BACK", "back", [&] { delete this; });
 
 	mMenu.setPosition((Renderer::getScreenWidth() - mMenu.getSize().x()) / 2, Renderer::getScreenHeight() * 0.15f);
@@ -49,8 +49,8 @@ void GuiScraperStart::pressedStart()
 		{
 			mWindow->pushGui(new GuiMsgBox(mWindow, 
 				Utils::String::toUpper("Warning: some of your selected systems do not have a platform set. Results may be even more inaccurate than usual!\nContinue anyway?"), 
-				"YES", std::bind(&GuiScraperStart::start, this), 
-				"NO", nullptr));
+				"ДА", std::bind(&GuiScraperStart::start, this), 
+				"НЕТ", nullptr));
 			return;
 		}
 	}
@@ -65,7 +65,7 @@ void GuiScraperStart::start()
 	if(searches.empty())
 	{
 		mWindow->pushGui(new GuiMsgBox(mWindow,
-			"NO GAMES FIT THAT CRITERIA."));
+			"НИ ОДНА ИГРА НЕ СОООТВЕТСТВУЕТ КРИТЕРИЮ."));
 	}else{
 		GuiScraperMulti* gsm = new GuiScraperMulti(mWindow, searches, mApproveResults->getState());
 		mWindow->pushGui(gsm);
