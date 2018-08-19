@@ -27,10 +27,10 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	std::vector<std::string> unusedFolders = CollectionSystemManager::get()->getUnusedSystemsFromTheme();
 	if (unusedFolders.size() > 0)
 	{
-		addEntry("CREATE NEW CUSTOM COLLECTION FROM THEME", 0x777777FF, true,
+		addEntry("Új játék gyűjtemény rendszerből", 0x777777FF, true,
 		[this, unusedFolders] {
-			auto s = new GuiSettings(mWindow, "SELECT THEME FOLDER");
-			std::shared_ptr< OptionListComponent<std::string> > folderThemes = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT THEME FOLDER", true);
+			auto s = new GuiSettings(mWindow, "Rendszer mappa választása");
+			std::shared_ptr< OptionListComponent<std::string> > folderThemes = std::make_shared< OptionListComponent<std::string> >(mWindow, "Rendszer mappa választása", true);
 
 			// add Custom Systems
 			for(auto it = unusedFolders.cbegin() ; it != unusedFolders.cend() ; it++ )
@@ -52,7 +52,7 @@ void GuiCollectionSystemsOptions::initializeMenu()
 	}
 
 	ComponentListRow row;
-	row.addElement(std::make_shared<TextComponent>(mWindow, "CREATE NEW CUSTOM COLLECTION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	row.addElement(std::make_shared<TextComponent>(mWindow, "Új egyedi gyűjtemény létrehozása", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
 	auto createCustomCollection = [this](const std::string& newVal) {
 		std::string name = newVal;
 		// we need to store the first Gui and remove it, as it'll be deleted by the actual Gui
@@ -69,11 +69,11 @@ void GuiCollectionSystemsOptions::initializeMenu()
 
 	bundleCustomCollections = std::make_shared<SwitchComponent>(mWindow);
 	bundleCustomCollections->setState(Settings::getInstance()->getBool("UseCustomCollectionsSystem"));
-	mMenu.addWithLabel("GROUP UNTHEMED CUSTOM COLLECTIONS", bundleCustomCollections);
+	mMenu.addWithLabel("Rendszer nélküli egyedi gyűjtemények csoportosítása", bundleCustomCollections);
 
 	sortAllSystemsSwitch = std::make_shared<SwitchComponent>(mWindow);
 	sortAllSystemsSwitch->setState(Settings::getInstance()->getBool("SortAllSystems"));
-	mMenu.addWithLabel("SORT CUSTOM COLLECTIONS AND SYSTEMS", sortAllSystemsSwitch);
+	mMenu.addWithLabel("Egyedi rendszerek és gyűjtemények csoportosítása", sortAllSystemsSwitch);
 
 	if(CollectionSystemManager::get()->isEditing())
 	{
@@ -139,25 +139,25 @@ void GuiCollectionSystemsOptions::addSystemsToMenu()
 
 	std::map<std::string, CollectionSystemData> autoSystems = CollectionSystemManager::get()->getAutoCollectionSystems();
 
-	autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT COLLECTIONS", true);
+	autoOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "Gyűjtemény kiválasztása", true);
 
 	// add Auto Systems
 	for(std::map<std::string, CollectionSystemData>::const_iterator it = autoSystems.cbegin() ; it != autoSystems.cend() ; it++ )
 	{
 		autoOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
-	mMenu.addWithLabel("AUTOMATIC GAME COLLECTIONS", autoOptionList);
+	mMenu.addWithLabel("Automatikus játék gyűjtése", autoOptionList);
 
 	std::map<std::string, CollectionSystemData> customSystems = CollectionSystemManager::get()->getCustomCollectionSystems();
 
-	customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "SELECT COLLECTIONS", true);
+	customOptionList = std::make_shared< OptionListComponent<std::string> >(mWindow, "Gyűjtemény kiválasztása", true);
 
 	// add Custom Systems
 	for(std::map<std::string, CollectionSystemData>::const_iterator it = customSystems.cbegin() ; it != customSystems.cend() ; it++ )
 	{
 		customOptionList->add(it->second.decl.longName, it->second.decl.name, it->second.isEnabled);
 	}
-	mMenu.addWithLabel("CUSTOM GAME COLLECTIONS", customOptionList);
+	mMenu.addWithLabel("Egyedi játék gyűjtemények", customOptionList);
 }
 
 void GuiCollectionSystemsOptions::applySettings()
