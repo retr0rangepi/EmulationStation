@@ -292,7 +292,7 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 void CollectionSystemManager::trimCollectionCount(FileData* rootFolder, int limit)
 {
 	SystemData* curSys = rootFolder->getSystem();
-	while (rootFolder->getChildren().size() > limit)
+	while ((int)rootFolder->getChildren().size() > limit)
 	{
 		CollectionFileData* gameToRemove = (CollectionFileData*)rootFolder->getChildrenListToDisplay().back();
 		ViewController::get()->getGameListView(curSys).get()->remove(gameToRemove, false);
@@ -1035,12 +1035,12 @@ bool CollectionSystemManager::includeFileInAutoCollections(FileData* file)
 
 std::string getCustomCollectionConfigPath(std::string collectionName)
 {
-	return getCollectionsFolder() + "custom-" + collectionName + ".cfg";;
+	return getCollectionsFolder() + "/custom-" + collectionName + ".cfg";
 }
 
 std::string getCollectionsFolder()
 {
-	return Utils::FileSystem::getGenericPath(Utils::FileSystem::getHomePath() + "/.emulationstation/collections/");
+	return Utils::FileSystem::getGenericPath(Utils::FileSystem::getHomePath() + "/.emulationstation/collections");
 }
 
 bool systemSort(SystemData* sys1, SystemData* sys2)

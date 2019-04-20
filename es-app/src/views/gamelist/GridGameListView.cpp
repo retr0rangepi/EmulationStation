@@ -49,7 +49,7 @@ GridGameListView::GridGameListView(Window* window, FileData* root) :
 	addChild(&mPlayers);
 	mLblLastPlayed.setText("Last played: ");
 	addChild(&mLblLastPlayed);
-	mLastPlayed.setDisplayMode(DateTimeComponent::DISP_RELATIVE_TO_NOW);
+	mLastPlayed.setDisplayRelative(true);
 	addChild(&mLastPlayed);
 	mLblPlayCount.setText("Times played: ");
 	addChild(&mLblPlayCount);
@@ -104,7 +104,7 @@ std::string GridGameListView::getQuickSystemSelectLeftButton()
 
 bool GridGameListView::input(InputConfig* config, Input input)
 {
-	if(config->isMappedTo("left", input) || config->isMappedTo("right", input))
+	if(config->isMappedLike("left", input) || config->isMappedLike("right", input))
 		return GuiComponent::input(config, input);
 
 	return ISimpleGameListView::input(config, input);
@@ -314,7 +314,7 @@ void GridGameListView::remove(FileData *game, bool deleteFile)
 		int gamePos = (int)std::distance(siblings.cbegin(), gameIter);
 		if (gameIter != siblings.cend())
 		{
-			if ((gamePos + 1) < siblings.size())
+			if ((gamePos + 1) < (int)siblings.size())
 			{
 				setCursor(siblings.at(gamePos + 1));
 			} else if ((gamePos - 1) > 0) {

@@ -81,7 +81,7 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 	mSubtitle1 = std::make_shared<TextComponent>(mWindow, Utils::String::toUpper(ss.str()), Font::get(FONT_SIZE_MEDIUM), 0x555555FF, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle1, Vector2i(0, 2), false, true);
 
-	mSubtitle2 = std::make_shared<TextComponent>(mWindow, "HOLD ANY BUTTON TO SKIP", Font::get(FONT_SIZE_SMALL), 0x99999900, ALIGN_CENTER);
+	mSubtitle2 = std::make_shared<TextComponent>(mWindow, "HOLD ANY BUTTON TO SKIP", Font::get(FONT_SIZE_SMALL), 0x999999FF, ALIGN_CENTER);
 	mGrid.setEntry(mSubtitle2, Vector2i(0, 3), false, true);
 
 	// 4 is a spacer row
@@ -132,6 +132,11 @@ GuiInputConfig::GuiInputConfig(Window* window, InputConfig* target, bool reconfi
 				// we're not configuring and they didn't press A to start, so ignore this
 				return false;
 			}
+
+
+			// filter for input quirks specific to Sony DualShock 3
+			if(filterTrigger(input, config))
+				return false;
 
 			// we are configuring
 			if(input.value != 0)
@@ -330,4 +335,25 @@ bool GuiInputConfig::assign(Input input, int inputId)
 void GuiInputConfig::clearAssignment(int inputId)
 {
 	mTargetConfig->unmapInput(GUI_INPUT_CONFIG_LIST[inputId].name);
+}
+
+bool GuiInputConfig::filterTrigger(Input input, InputConfig* config)
+{
+#if defined(__linux__)
+	// match PlayStation joystick with 6 axes only
+	if((strstr(config->getDeviceName().c_str(), "PLAYSTATION") != NULL \
+	  || strstr(config->getDeviceName().c_str(), "PS3 Game") != NULL \
+	  || strstr(config->getDeviceName().c_str(), "PS(R) Game") != NULL) \
+	  && InputManager::getInstance()->getAxisCountByDevice(config->getDeviceId()) == 6)
+	{
+		// digital triggers are unwanted
+		if (input.type == TYPE_BUTTON && (input.id == 6 || input.id == 7))
+			return true;
+		// ignore analog values < 0
+		if (input.type == TYPE_AXIS && (input.id == 2 || input.id == 5) && input.value < 0)
+			return true;
+	}
+#endif
+
+	return false;
 }
