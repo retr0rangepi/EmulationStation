@@ -26,9 +26,8 @@ GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3
 	if (!(UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("hideQuitMenuOnKidUI")))
 		addEntry("QUIT", 0x777777FF, true, [this] {openQuitMenu(); });
 
-        if (isFullUI) addEntry("DESKTOP", 0x777777FF, true, [this] { Window* window = mWindow;
-                window->pushGui(new GuiMsgBox(window, "ARE YOU SURE YOU WANT TO LAUNCH DESKTOP?", "YES", [window]
-                        { system("startx 2> /dev/null"); }, "NO", nullptr) ); });
+	if (isFullUI)
+		addEntry("DESKTOP", 0x777777FF, true, [this] { openDesktop(); });
 
 	if (isFullUI)
 		addEntry("CONFIGURE INPUT", 0x777777FF, true, [this] { openConfigInput(); });
@@ -467,6 +466,18 @@ void GuiMenu::openConfigInput()
 	window->pushGui(new GuiMsgBox(window, "ARE YOU SURE YOU WANT TO CONFIGURE INPUT?", "YES",
 		[window] {
 		window->pushGui(new GuiDetectDevice(window, false, nullptr));
+	}, "NO", nullptr)
+	);
+
+}
+
+void GuiMenu::openDesktop()
+{
+	Window* window = mWindow;
+	window->pushGui(new GuiMsgBox(window, "ARE YOU SURE YOU WANT TO LAUNCH DESKTOP?", "YES",
+		[window] {
+                         if(system("ArmbianDesktop") !=0);
+                         //if(system("startx 2> /dev/null") !=0);
 	}, "NO", nullptr)
 	);
 
