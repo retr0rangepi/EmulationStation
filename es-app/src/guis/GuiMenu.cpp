@@ -19,15 +19,12 @@
 #include <SDL_events.h>
 #include <algorithm>
 
-GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3 RC"), mVersion(window)
+GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3 Menu"), mVersion(window)
 {
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
 	if (!(UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("hideQuitMenuOnKidUI")))
 		addEntry("QUIT", 0x777777FF, true, [this] {openQuitMenu(); });
-
-	if (isFullUI)
-		addEntry("DESKTOP", 0x777777FF, true, [this] { openDesktop(); });
 
 	if (isFullUI)
 		addEntry("CONFIGURE INPUT", 0x777777FF, true, [this] { openConfigInput(); });
@@ -43,10 +40,6 @@ GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3
 
 	if (isFullUI)
 		addEntry("GAME COLLECTION SETTINGS", 0x777777FF, true, [this] { openCollectionSystemSettings(); });
-
-        if (isFullUI) addEntry("SLEEP MODE", 0x777777FF, true, [this] { Window* window = mWindow;
-                window->pushGui(new GuiMsgBox(window, "REALLY SLEEP?", "YES", [window]
-                        { system("/home/pi/RetrOrangePi/Power_Button/Sleep_mode.sh 2> /dev/null"); }, "NO", nullptr) ); });
 
 	if (isFullUI)
 		addEntry("OTHER SETTINGS", 0x777777FF, true, [this] { openOtherSettings(); });
