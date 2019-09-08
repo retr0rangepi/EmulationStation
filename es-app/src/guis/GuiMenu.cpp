@@ -18,6 +18,7 @@
 #include "VolumeControl.h"
 #include <SDL_events.h>
 #include <algorithm>
+#include "platform.h"
 
 GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3 Menu"), mVersion(window)
 {
@@ -222,7 +223,7 @@ void GuiMenu::openUISettings()
 			msg += "To unlock and return to the full UI, enter this code: \n";
 			msg += "\"" + UIModeController::getInstance()->getFormattedPassKeyStr() + "\"\n\n";
 			msg += "Do you want to proceed?";
-			window->pushGui(new GuiMsgBox(window, msg, 
+			window->pushGui(new GuiMsgBox(window, msg,
 				"YES", [selectedMode] {
 					LOG(LogDebug) << "Setting UI mode to " << selectedMode;
 					Settings::getInstance()->setString("UIMode", selectedMode);
@@ -360,9 +361,9 @@ void GuiMenu::openUISettings()
 	auto enable_filter = std::make_shared<SwitchComponent>(mWindow);
 	enable_filter->setState(!Settings::getInstance()->getBool("ForceDisableFilters"));
 	s->addWithLabel("ENABLE FILTERS", enable_filter);
-	s->addSaveFunc([enable_filter] { 
+	s->addSaveFunc([enable_filter] {
 		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
-		Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()); 
+		Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState());
 		if (enable_filter->getState() != filter_is_enabled) ViewController::get()->ReloadAndGoToStart();
 	});
 
@@ -485,56 +486,59 @@ void GuiMenu::openQuitMenu()
 	ComponentListRow row;
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY QUIT?", "YES",
-                        [] {
-                        SDL_Event ev;
-                        ev.type = SDL_QUIT;
-                        SDL_PushEvent(&ev);
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "QUIT EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
+		row.makeAcceptInputHandler([window] {
+			window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
+				[] {
+				Scripting::fireEvent("quit");
+				if(quitES(QuitMode::RESTART) != 0)
+					LOG(LogWarning) << "Restart terminated with non-zero result!";
+			}, "NO", nullptr));
+		});
+		row.addElement(std::make_shared<TextComponent>(window, "RESTART EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		s->addRow(row);
 
 
-                if(Settings::getInstance()->getBool("ShowExit"))
-                {
 
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY SHUTDOWN?", "YES",
-                        [] {
-                        if (quitES("/tmp/es-shutdown") != 0)
-                                LOG(LogWarning) << "Shutdown terminated with non-zero result!";
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "SHUTDOWN SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
-                }
-
+		if(Settings::getInstance()->getBool("ShowExit"))
+		{
+			row.elements.clear();
+			row.makeAcceptInputHandler([window] {
+				window->pushGui(new GuiMsgBox(window, "REALLY QUIT?", "YES",
+					[] {
+					Scripting::fireEvent("quit");
+					quitES();
+				}, "NO", nullptr));
+			});
+			row.addElement(std::make_shared<TextComponent>(window, "QUIT EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+			s->addRow(row);
+		}
 	}
-        row.elements.clear();
-                row.makeAcceptInputHandler([window] {
-                        window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
-                                [] {
-                                if(quitES("/tmp/es-restart") != 0)
-                                        LOG(LogWarning) << "Restart terminated with non-zero result!";
-                        }, "NO", nullptr));
-                });
-                row.addElement(std::make_shared<TextComponent>(window, "RESTART EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-                s->addRow(row);
+	row.elements.clear();
+	row.makeAcceptInputHandler([window] {
+		window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
+			[] {
+			Scripting::fireEvent("quit", "reboot");
+			Scripting::fireEvent("reboot");
+			if (quitES(QuitMode::REBOOT) != 0)
+				LOG(LogWarning) << "Restart terminated with non-zero result!";
+		}, "NO", nullptr));
+	});
+	row.addElement(std::make_shared<TextComponent>(window, "RESTART SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	s->addRow(row);
 
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
-                        [] {
-                        if (quitES("/tmp/es-sysrestart") != 0)
-                                LOG(LogWarning) << "Restart terminated with non-zero result!";
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "RESTART SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
+	row.elements.clear();
+	row.makeAcceptInputHandler([window] {
+		window->pushGui(new GuiMsgBox(window, "REALLY SHUTDOWN?", "YES",
+			[] {
+			Scripting::fireEvent("quit", "shutdown");
+			Scripting::fireEvent("shutdown");
+			if (quitES(QuitMode::SHUTDOWN) != 0)
+				LOG(LogWarning) << "Shutdown terminated with non-zero result!";
+		}, "NO", nullptr));
+	});
+	row.addElement(std::make_shared<TextComponent>(window, "SHUTDOWN SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	s->addRow(row);
+
 	mWindow->pushGui(s);
 }
 
