@@ -465,18 +465,6 @@ void GuiMenu::openConfigInput()
 
 }
 
-void GuiMenu::openDesktop()
-{
-	Window* window = mWindow;
-	window->pushGui(new GuiMsgBox(window, "ARE YOU SURE YOU WANT TO LAUNCH DESKTOP?", "YES",
-		[window] {
-                         if(system("ArmbianDesktop") !=0);
-                         //if(system("startx 2> /dev/null") !=0);
-	}, "NO", nullptr)
-	);
-
-}
-
 void GuiMenu::openQuitMenu()
 {
 	auto s = new GuiSettings(mWindow, "QUIT");

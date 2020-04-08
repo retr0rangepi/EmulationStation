@@ -44,7 +44,6 @@ Some metadata is also marked as "statistic" - these are kept track of by ES and 
 * `name` - string, the displayed name for the game.
 * `desc` - string, a description of the game.  Longer descriptions will automatically scroll, so don't worry about size.
 * `image` - image_path, the path to an image to display for the game (like box art or a screenshot).
-* `thumbnail` - image_path, the path to a smaller image, displayed in image lists like the grid view.  Should be small to ensure quick loading.  *Currently not used.*
 * `thumbnail` - image_path, the path to a smaller image, displayed in image lists like the grid view.  Should be small to ensure quick loading.
 * `video` - video_path, the path to a video to display for the game, for themes that support the _video_ viewstyle.
 * `rating` - float, the rating for the game, expressed as a floating point number between 0 and 1.  Arbitrary values are fine (ES can display half-stars, quarter-stars, etc).

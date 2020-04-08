@@ -8,8 +8,8 @@
 #endif
 
 #if defined(__linux__)
-    #ifdef _RPI_
-        const char * VolumeControl::mixerName = "pcm";
+    #if defined(_RPI_) || defined(_VERO4K_)
+        const char * VolumeControl::mixerName = "PCM";
     #else
     	const char * VolumeControl::mixerName = "Master";
     #endif

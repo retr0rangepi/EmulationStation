@@ -259,6 +259,7 @@ unsigned long SystemScreenSaver::countGameListNodes(const char *nodeName)
 	std::vector<SystemData*>::const_iterator it;
 	for (it = SystemData::sSystemVector.cbegin(); it != SystemData::sSystemVector.cend(); ++it)
 	{
+		// We only want nodes from game systems that are not collections
 		if (!(*it)->isGameSystem() || (*it)->isCollection())
 			continue;
 
