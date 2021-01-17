@@ -19,7 +19,7 @@
 #include <SDL_events.h>
 #include <algorithm>
 
-GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.3 RC"), mVersion(window)
+GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.2 Reloaded"), mVersion(window)
 {
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
