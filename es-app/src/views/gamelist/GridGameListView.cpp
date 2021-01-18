@@ -6,10 +6,17 @@
 #include "CollectionSystemManager.h"
 #include "Settings.h"
 #include "SystemData.h"
+#ifdef _RPI_
+#include "components/VideoPlayerComponent.h"
+#endif
+#include "components/VideoVlcComponent.h"
 
 GridGameListView::GridGameListView(Window* window, FileData* root) :
 	ISimpleGameListView(window, root),
-	mGrid(window),
+	mGrid(window), mMarquee(window),
+	mImage(window),
+	mVideo(nullptr),
+	mVideoPlaying(false),
 	mDescContainer(window), mDescription(window),
 
 	mLblRating(window), mLblReleaseDate(window), mLblDeveloper(window), mLblPublisher(window),
@@ -20,6 +27,16 @@ GridGameListView::GridGameListView(Window* window, FileData* root) :
 	mName(window)
 {
 	const float padding = 0.01f;
+
+// Create the correct type of video window
+#ifdef _RPI_
+	if (Settings::getInstance()->getBool("VideoOmxPlayer"))
+		mVideo = new VideoPlayerComponent(window, "");
+	else
+		mVideo = new VideoVlcComponent(window, getTitlePath());
+#else
+	mVideo = new VideoVlcComponent(window, getTitlePath());
+#endif
 
 	mGrid.setPosition(mSize.x() * 0.1f, mSize.y() * 0.1f);
 	mGrid.setDefaultZIndex(20);
@@ -72,10 +89,41 @@ GridGameListView::GridGameListView(Window* window, FileData* root) :
 	mDescription.setSize(mDescContainer.getSize().x(), 0);
 	mDescContainer.addChild(&mDescription);
 
+	// Image
+	// Default to off the screen
+	mImage.setOrigin(0.5f, 0.5f);
+	mImage.setPosition(2.0f, 2.0f);
+	mImage.setMaxSize(mSize.x(), mSize.y());
+	mImage.setDefaultZIndex(30);
+	mImage.setVisible(false);
+	addChild(&mImage);
+
+	// Video
+	// Default to off the screen
+	mVideo->setOrigin(0.5f, 0.5f);
+	mVideo->setPosition(2.0f, 2.0f);
+	mVideo->setSize(mSize.x(), mSize.y());
+	mVideo->setDefaultZIndex(30);
+	mVideo->setVisible(false);
+	addChild(mVideo);
+
+	// Marquee
+	// Default to off the screen
+	mMarquee.setOrigin(0.5f, 0.5f);
+	mMarquee.setPosition(2.0f, 2.0f);
+	mMarquee.setMaxSize(mSize.x(), mSize.y());
+	mMarquee.setDefaultZIndex(35);
+	mMarquee.setVisible(false);
+	addChild(&mMarquee);
 
 	initMDLabels();
 	initMDValues();
 	updateInfoPanel();
+}
+
+GridGameListView::~GridGameListView()
+{
+	delete mVideo;
 }
 
 FileData* GridGameListView::getCursor()
@@ -85,7 +133,7 @@ FileData* GridGameListView::getCursor()
 
 void GridGameListView::setCursor(FileData* file)
 {
-	if(!mGrid.setCursor(file))
+	if(!mGrid.setCursor(file) && (!file->isPlaceHolder()))
 	{
 		populateList(file->getParent()->getChildrenListToDisplay());
 		mGrid.setCursor(file);
@@ -94,12 +142,12 @@ void GridGameListView::setCursor(FileData* file)
 
 std::string GridGameListView::getQuickSystemSelectRightButton()
 {
-	return "pagedown"; //rightshoulder
+	return "rightshoulder";
 }
 
 std::string GridGameListView::getQuickSystemSelectLeftButton()
 {
-	return "pageup"; //leftshoulder
+	return "leftshoulder";
 }
 
 bool GridGameListView::input(InputConfig* config, Input input)
@@ -110,6 +158,18 @@ bool GridGameListView::input(InputConfig* config, Input input)
 	return ISimpleGameListView::input(config, input);
 }
 
+const std::string GridGameListView::getImagePath(FileData* file)
+{
+	ImageSource src = mGrid.getImageSource();
+
+	if (src == ImageSource::IMAGE)
+		return file->getImagePath();
+	else if (src == ImageSource::MARQUEE)
+		return file->getMarqueePath();
+
+	return file->getThumbnailPath();
+}
+
 void GridGameListView::populateList(const std::vector<FileData*>& files)
 {
 	mGrid.clear();
@@ -118,7 +178,7 @@ void GridGameListView::populateList(const std::vector<FileData*>& files)
 	{
 		for (auto it = files.cbegin(); it != files.cend(); it++)
 		{
-			mGrid.add((*it)->getName(), (*it)->getThumbnailPath(), *it);
+			mGrid.add((*it)->getName(), getImagePath(*it), *it);
 		}
 	}
 	else
@@ -135,6 +195,9 @@ void GridGameListView::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 
 	mGrid.applyTheme(theme, getName(), "gamegrid", ALL);
 	mName.applyTheme(theme, getName(), "md_name", ALL);
+	mMarquee.applyTheme(theme, getName(), "md_marquee", POSITION | ThemeFlags::SIZE | Z_INDEX | ROTATION | VISIBLE);
+	mImage.applyTheme(theme, getName(), "md_image", POSITION | ThemeFlags::SIZE | Z_INDEX | ROTATION | VISIBLE);
+	mVideo->applyTheme(theme, getName(), "md_video", POSITION | ThemeFlags::SIZE | ThemeFlags::DELAY | Z_INDEX | ROTATION | VISIBLE);
 
 	initMDLabels();
 	std::vector<TextComponent*> labels = getMDLabels();
@@ -163,9 +226,14 @@ void GridGameListView::onThemeChanged(const std::shared_ptr<ThemeData>& theme)
 		values[i]->applyTheme(theme, getName(), valElements[i], ALL ^ ThemeFlags::TEXT);
 	}
 
-	mDescContainer.applyTheme(theme, getName(), "md_description", POSITION | ThemeFlags::SIZE | Z_INDEX);
+	mDescContainer.applyTheme(theme, getName(), "md_description", POSITION | ThemeFlags::SIZE | Z_INDEX | VISIBLE);
 	mDescription.setSize(mDescContainer.getSize().x(), 0);
 	mDescription.applyTheme(theme, getName(), "md_description", ALL ^ (POSITION | ThemeFlags::SIZE | ThemeFlags::ORIGIN | TEXT | ROTATION));
+
+	// Repopulate list in case new theme is displaying a different image.  Preserve selection.
+	FileData* file = mGrid.getSelected();
+	populateList(mRoot->getChildrenListToDisplay());
+	mGrid.setCursor(file);
 
 	sortChildren();
 }
@@ -242,9 +310,23 @@ void GridGameListView::updateInfoPanel()
 	bool fadingOut;
 	if(file == NULL)
 	{
+		mVideo->setVideo("");
+		mVideo->setImage("");
+		mVideoPlaying = false;
+
 		//mDescription.setText("");
 		fadingOut = true;
 	}else{
+		if (!mVideo->setVideo(file->getVideoPath()))
+		{
+			mVideo->setDefaultVideo();
+		}
+		mVideoPlaying = true;
+
+		mVideo->setImage(file->getThumbnailPath());
+		mMarquee.setImage(file->getMarqueePath());
+		mImage.setImage(file->getImagePath());
+
 		mDescription.setText(file->metadata.get("desc"));
 		mDescContainer.reset();
 
@@ -268,6 +350,9 @@ void GridGameListView::updateInfoPanel()
 	std::vector<GuiComponent*> comps = getMDValues();
 	comps.push_back(&mDescription);
 	comps.push_back(&mName);
+	comps.push_back(&mMarquee);
+	comps.push_back(mVideo);
+	comps.push_back(&mImage);
 	std::vector<TextComponent*> labels = getMDLabels();
 	comps.insert(comps.cend(), labels.cbegin(), labels.cend());
 
@@ -299,7 +384,31 @@ void GridGameListView::addPlaceholder()
 
 void GridGameListView::launch(FileData* game)
 {
-	ViewController::get()->launch(game);
+	float screenWidth = (float) Renderer::getScreenWidth();
+	float screenHeight = (float) Renderer::getScreenHeight();
+
+	Vector3f target(screenWidth / 2.0f, screenHeight / 2.0f, 0);
+
+	if(mMarquee.hasImage() &&
+		(mMarquee.getPosition().x() < screenWidth && mMarquee.getPosition().x() > 0.0f &&
+		 mMarquee.getPosition().y() < screenHeight && mMarquee.getPosition().y() > 0.0f))
+	{
+		target = Vector3f(mMarquee.getCenter().x(), mMarquee.getCenter().y(), 0);
+	}
+	else if(mImage.hasImage() &&
+		(mImage.getPosition().x() < screenWidth && mImage.getPosition().x() > 2.0f &&
+		 mImage.getPosition().y() < screenHeight && mImage.getPosition().y() > 2.0f))
+	{
+		target = Vector3f(mImage.getCenter().x(), mImage.getCenter().y(), 0);
+	}
+	else if(mVideo->getPosition().x() < screenWidth && mVideo->getPosition().x() > 0.0f &&
+		 mVideo->getPosition().y() < screenHeight && mVideo->getPosition().y() > 0.0f)
+	{
+		target = Vector3f(mVideo->getCenter().x(), mVideo->getCenter().y(), 0);
+	}
+
+	ViewController::get()->launch(game, target);
+
 }
 
 void GridGameListView::remove(FileData *game, bool deleteFile)
@@ -378,4 +487,16 @@ std::vector<HelpPrompt> GridGameListView::getHelpPrompts()
 		prompts.push_back(HelpPrompt("y", prompt));
 	}
 	return prompts;
+}
+
+void GridGameListView::update(int deltaTime)
+{
+	ISimpleGameListView::update(deltaTime);
+	mVideo->update(deltaTime);
+}
+
+void GridGameListView::onShow()
+{
+	GuiComponent::onShow();
+	updateInfoPanel();
 }

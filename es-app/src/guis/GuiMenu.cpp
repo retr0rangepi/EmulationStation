@@ -18,39 +18,30 @@
 #include "VolumeControl.h"
 #include <SDL_events.h>
 #include <algorithm>
+#include "platform.h"
 
 GuiMenu::GuiMenu(Window* window) : GuiComponent(window), mMenu(window, "ROPi 4.2 Reloaded"), mVersion(window)
 {
 	bool isFullUI = UIModeController::getInstance()->isUIModeFull();
 
-	if (!(UIModeController::getInstance()->isUIModeKid() && Settings::getInstance()->getBool("hideQuitMenuOnKidUI")))
-		addEntry("QUIT", 0x777777FF, true, [this] {openQuitMenu(); });
-
-        if (isFullUI) addEntry("DESKTOP", 0x777777FF, true, [this] { Window* window = mWindow;
-                window->pushGui(new GuiMsgBox(window, "ARE YOU SURE YOU WANT TO LAUNCH DESKTOP?", "YES", [window]
-                        { system("startx 2> /dev/null"); }, "NO", nullptr) ); });
+	addEntry("QUIT", 0x777777FF, true, [this] {openQuitMenu(); });
 
 	if (isFullUI)
 		addEntry("CONFIGURE INPUT", 0x777777FF, true, [this] { openConfigInput(); });
 
 	if (isFullUI)
-		addEntry("SCRAPER", 0x777777FF, true, [this] { openScraperSettings(); });
-
-        if (isFullUI)
-		addEntry("SOUND SETTINGS", 0x777777FF, true, [this] { openSoundSettings(); });
-
-	if (isFullUI)
 		addEntry("UI SETTINGS", 0x777777FF, true, [this] { openUISettings(); });
+
+	addEntry("SOUND SETTINGS", 0x777777FF, true, [this] { openSoundSettings(); });
 
 	if (isFullUI)
 		addEntry("GAME COLLECTION SETTINGS", 0x777777FF, true, [this] { openCollectionSystemSettings(); });
 
-        if (isFullUI) addEntry("SLEEP MODE", 0x777777FF, true, [this] { Window* window = mWindow;
-                window->pushGui(new GuiMsgBox(window, "REALLY SLEEP?", "YES", [window]
-                        { system("/home/pi/RetrOrangePi/Power_Button/Sleep_mode.sh 2> /dev/null"); }, "NO", nullptr) ); });
-
 	if (isFullUI)
 		addEntry("OTHER SETTINGS", 0x777777FF, true, [this] { openOtherSettings(); });
+
+	if (isFullUI)
+		addEntry("SCRAPER", 0x777777FF, true, [this] { openScraperSettings(); });
 
 	addChild(&mMenu);
 	addVersionInfo();
@@ -111,12 +102,6 @@ void GuiMenu::openSoundSettings()
 		// audio card
 		auto audio_card = std::make_shared< OptionListComponent<std::string> >(mWindow, "AUDIO CARD", false);
 		std::vector<std::string> audio_cards;
-	#ifdef _RPI_
-		// RPi Specific  Audio Cards
-		audio_cards.push_back("local");
-		audio_cards.push_back("hdmi");
-		audio_cards.push_back("both");
-	#endif
 		audio_cards.push_back("default");
 		audio_cards.push_back("sysdefault");
 		audio_cards.push_back("dmix");
@@ -141,6 +126,8 @@ void GuiMenu::openSoundSettings()
 		auto vol_dev = std::make_shared< OptionListComponent<std::string> >(mWindow, "AUDIO DEVICE", false);
 		std::vector<std::string> transitions;
 		transitions.push_back("PCM");
+		transitions.push_back("HDMI");
+		transitions.push_back("Headphone");
 		transitions.push_back("Speaker");
 		transitions.push_back("Master");
 		transitions.push_back("Digital");
@@ -188,6 +175,7 @@ void GuiMenu::openSoundSettings()
 		omx_cards.push_back("local");
 		omx_cards.push_back("hdmi");
 		omx_cards.push_back("both");
+		omx_cards.push_back("alsa");
 		omx_cards.push_back("alsa:hw:0,0");
 		omx_cards.push_back("alsa:hw:1,0");
 		if (Settings::getInstance()->getString("OMXAudioDev") != "") {
@@ -230,7 +218,7 @@ void GuiMenu::openUISettings()
 			msg += "To unlock and return to the full UI, enter this code: \n";
 			msg += "\"" + UIModeController::getInstance()->getFormattedPassKeyStr() + "\"\n\n";
 			msg += "Do you want to proceed?";
-			window->pushGui(new GuiMsgBox(window, msg, 
+			window->pushGui(new GuiMsgBox(window, msg,
 				"YES", [selectedMode] {
 					LOG(LogDebug) << "Setting UI mode to " << selectedMode;
 					Settings::getInstance()->setString("UIMode", selectedMode);
@@ -368,11 +356,17 @@ void GuiMenu::openUISettings()
 	auto enable_filter = std::make_shared<SwitchComponent>(mWindow);
 	enable_filter->setState(!Settings::getInstance()->getBool("ForceDisableFilters"));
 	s->addWithLabel("ENABLE FILTERS", enable_filter);
-	s->addSaveFunc([enable_filter] { 
+	s->addSaveFunc([enable_filter] {
 		bool filter_is_enabled = !Settings::getInstance()->getBool("ForceDisableFilters");
-		Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState()); 
+		Settings::getInstance()->setBool("ForceDisableFilters", !enable_filter->getState());
 		if (enable_filter->getState() != filter_is_enabled) ViewController::get()->ReloadAndGoToStart();
 	});
+
+	// hide start menu in Kid Mode
+	auto disable_start = std::make_shared<SwitchComponent>(mWindow);
+	disable_start->setState(Settings::getInstance()->getBool("DisableKidStartMenu"));
+	s->addWithLabel("DISABLE START MENU IN KID MODE", disable_start);
+	s->addSaveFunc([disable_start] { Settings::getInstance()->setBool("DisableKidStartMenu", disable_start->getState()); });
 
 	mWindow->pushGui(s);
 
@@ -409,10 +403,18 @@ void GuiMenu::openOtherSettings()
 	});
 
 	// gamelists
-	auto save_gamelists = std::make_shared<SwitchComponent>(mWindow);
-	save_gamelists->setState(Settings::getInstance()->getBool("SaveGamelistsOnExit"));
-	s->addWithLabel("SAVE METADATA ON EXIT", save_gamelists);
-	s->addSaveFunc([save_gamelists] { Settings::getInstance()->setBool("SaveGamelistsOnExit", save_gamelists->getState()); });
+	auto gamelistsSaveMode = std::make_shared< OptionListComponent<std::string> >(mWindow, "SAVE METADATA", false);
+	std::vector<std::string> saveModes;
+	saveModes.push_back("on exit");
+	saveModes.push_back("always");
+	saveModes.push_back("never");
+
+	for(auto it = saveModes.cbegin(); it != saveModes.cend(); it++)
+		gamelistsSaveMode->add(*it, *it, Settings::getInstance()->getString("SaveGamelistsMode") == *it);
+	s->addWithLabel("SAVE METADATA", gamelistsSaveMode);
+	s->addSaveFunc([gamelistsSaveMode] {
+		Settings::getInstance()->setString("SaveGamelistsMode", gamelistsSaveMode->getSelected());
+	});
 
 	auto parse_gamelists = std::make_shared<SwitchComponent>(mWindow);
 	parse_gamelists->setState(Settings::getInstance()->getBool("ParseGamelistOnly"));
@@ -481,56 +483,59 @@ void GuiMenu::openQuitMenu()
 	ComponentListRow row;
 	if (UIModeController::getInstance()->isUIModeFull())
 	{
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY QUIT?", "YES",
-                        [] {
-                        SDL_Event ev;
-                        ev.type = SDL_QUIT;
-                        SDL_PushEvent(&ev);
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "QUIT EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
+		row.makeAcceptInputHandler([window] {
+			window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
+				[] {
+				Scripting::fireEvent("quit");
+				if(quitES(QuitMode::RESTART) != 0)
+					LOG(LogWarning) << "Restart terminated with non-zero result!";
+			}, "NO", nullptr));
+		});
+		row.addElement(std::make_shared<TextComponent>(window, "RESTART EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+		s->addRow(row);
 
 
-                if(Settings::getInstance()->getBool("ShowExit"))
-                {
 
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY SHUTDOWN?", "YES",
-                        [] {
-                        if (quitES("/tmp/es-shutdown") != 0)
-                                LOG(LogWarning) << "Shutdown terminated with non-zero result!";
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "SHUTDOWN SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
-                }
-
+		if(Settings::getInstance()->getBool("ShowExit"))
+		{
+			row.elements.clear();
+			row.makeAcceptInputHandler([window] {
+				window->pushGui(new GuiMsgBox(window, "REALLY QUIT?", "YES",
+					[] {
+					Scripting::fireEvent("quit");
+					quitES();
+				}, "NO", nullptr));
+			});
+			row.addElement(std::make_shared<TextComponent>(window, "QUIT EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+			s->addRow(row);
+		}
 	}
-        row.elements.clear();
-                row.makeAcceptInputHandler([window] {
-                        window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
-                                [] {
-                                if(quitES("/tmp/es-restart") != 0)
-                                        LOG(LogWarning) << "Restart terminated with non-zero result!";
-                        }, "NO", nullptr));
-                });
-                row.addElement(std::make_shared<TextComponent>(window, "RESTART EMULATIONSTATION", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-                s->addRow(row);
+	row.elements.clear();
+	row.makeAcceptInputHandler([window] {
+		window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
+			[] {
+			Scripting::fireEvent("quit", "reboot");
+			Scripting::fireEvent("reboot");
+			if (quitES(QuitMode::REBOOT) != 0)
+				LOG(LogWarning) << "Restart terminated with non-zero result!";
+		}, "NO", nullptr));
+	});
+	row.addElement(std::make_shared<TextComponent>(window, "RESTART SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	s->addRow(row);
 
-        row.elements.clear();
-        row.makeAcceptInputHandler([window] {
-                window->pushGui(new GuiMsgBox(window, "REALLY RESTART?", "YES",
-                        [] {
-                        if (quitES("/tmp/es-sysrestart") != 0)
-                                LOG(LogWarning) << "Restart terminated with non-zero result!";
-                }, "NO", nullptr));
-        });
-        row.addElement(std::make_shared<TextComponent>(window, "RESTART SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
-        s->addRow(row);
+	row.elements.clear();
+	row.makeAcceptInputHandler([window] {
+		window->pushGui(new GuiMsgBox(window, "REALLY SHUTDOWN?", "YES",
+			[] {
+			Scripting::fireEvent("quit", "shutdown");
+			Scripting::fireEvent("shutdown");
+			if (quitES(QuitMode::SHUTDOWN) != 0)
+				LOG(LogWarning) << "Shutdown terminated with non-zero result!";
+		}, "NO", nullptr));
+	});
+	row.addElement(std::make_shared<TextComponent>(window, "SHUTDOWN SYSTEM", Font::get(FONT_SIZE_MEDIUM), 0x777777FF), true);
+	s->addRow(row);
+
 	mWindow->pushGui(s);
 }
 
@@ -540,7 +545,8 @@ void GuiMenu::addVersionInfo()
 
 	mVersion.setFont(Font::get(FONT_SIZE_SMALL));
 	mVersion.setColor(0x5E5E5EFF);
-	mVersion.setText("Brought you by RetrOrangePi");
+	//mVersion.setText("RetrOrangePi 2021" + Utils::String::toUpper(PROGRAM_VERSION_STRING) + buildDate);
+	mVersion.setText("RetrOrangePi 2021 - www.retrorangepi.org");
 	mVersion.setHorizontalAlignment(ALIGN_CENTER);
 	addChild(&mVersion);
 }

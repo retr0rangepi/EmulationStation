@@ -117,6 +117,51 @@ Advanced Features
 
 It is recommended that if you are writing a theme you launch EmulationStation with the `--debug` and `--windowed` switches.  This way you can read error messages without having to check the log file.  You can also reload the current gamelist view and system view with `Ctrl-R` if `--debug` is specified.
 
+### The `<resolution>` tag
+
+You can specifiy the resolution the theme was made for using this. This defaults to 1 1.
+When parsing any elements of type RESOLUTION_RECT, RESOLUTION_PAIR or RESOLUTION_FLOAT, they will have their values divided by the resolution specified so they become percentages.
+The following 2 examples produce the same result
+
+```xml
+<theme>
+	<formatVersion>6</formatVersion>
+	<view name="detailed">
+		<text name="description">
+			<color>00FF00</color>
+		</text>
+		<image name="my_image" extra="true">
+			<pos>0.5 0.5</pos>
+			<origin>0.5 0.5</origin>
+			<size>0.8 0.8</size>
+			<path>./my_art/my_awesome_image.jpg</path>
+		</image>
+	</view>
+</theme>
+```
+
+```xml
+<theme>
+	<formatVersion>6</formatVersion>
+	<resolution>1920 1080</resolution>
+	<view name="detailed">
+		<text name="description">
+			<color>00FF00</color>
+		</text>
+		<image name="my_image" extra="true">
+			<pos>960 540</pos>
+			<origin>0.5 0.5</origin>
+			<size>1536 864</size>
+			<path>./my_art/my_awesome_image.jpg</path>
+		</image>
+	</view>
+</theme>
+```
+
+The difference is how we specify the position and size of the image element.
+This does not limit a theme to be used at a certain resolution, but merely helps the theme makers build their themes using pixel values rather than percentages.
+Parenting of elements can not be used when using a resolution other than 1 1.
+
 ### The `<include>` tag
 
 You can include theme files within theme files, similar to `#include` in C (though the internal mechanism is different, the effect is the same).  Example:
@@ -285,6 +330,7 @@ You can now change the order in which elements are rendered by setting `zIndex` 
 * Media
 	* `image name="md_image"` - 30
 	* `video name="md_video"` - 30
+	* `image name="md_thumbnail"` - 35
 	* `image name="md_marquee"` - 35
 * Metadata - 40
 	* Labels
@@ -537,13 +583,15 @@ Reference
 
 ## Types of properties:
 
-* NORMALIZED_PAIR - two decimals, in the range [0..1], delimited by a space.  For example, `0.25 0.5`.  Most commonly used for position (x and y coordinates) and size (width and height).
+* RESOLUTION_RECT - four decimals, using pixels in the range [0..resolution], delimited by a space. For example, `320 640 80 160`.  Most commonly used for padding to store top, left, bottom and right coordinates.
+* RESOLUTION_PAIR - two decimals, using pixels in the range [0..resolution], delimited by a space.  For example, `320 640`.  Most commonly used for position (x and y coordinates) and size (width and height).
+* RESOLUTION_FLOAT - a decimal, using pixels in the range [0..resolution].  Most commonly used for font size.
+* NORMALIZED_PAIR - two decimals, using percentage in the range [0..1], delimited by a space.  For example, `0.25 0.5`.  Most commonly used for origin (x and y coordinates).
 * PATH - a path.  If the first character is a `~`, it will be expanded into the environment variable for the home path (`$HOME` for Linux or `%HOMEPATH%` for Windows).  If the first character is a `.`, it will be expanded to the theme file's directory, allowing you to specify resources relative to the theme file, like so: `./../general_art/myfont.ttf`.
-* BOOLEAN - `true`/`1` or `false`/`0`.
+* STRING - a string of text.
 * COLOR - a hexidecimal RGB or RGBA color (6 or 8 digits).  If 6 digits, will assume the alpha channel is `FF` (not transparent).
 * FLOAT - a decimal.
-* STRING - a string of text.
-
+* BOOLEAN - `true`/`1` or `false`/`0`.
 
 ## Types of elements and their properties:
 
@@ -557,10 +605,10 @@ Remember, you do *not* need to specify every property!
 
 Can be created as an extra.
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 	- If only one axis is specified (and the other is zero), the other will be automatically calculated in accordance with the image's aspect ratio.
-* `maxSize` - type: NORMALIZED_PAIR.
+* `maxSize` - type: RESOLUTION_PAIR.
 	- The image will be resized as large as possible so that it fits within this size and maintains its aspect ratio.  Use this instead of `size` when you don't know what kind of image you're using so it doesn't get grossly oversized on one axis (e.g. with a game's image metadata).
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the image `pos` refers to.  For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the image exactly in the middle of the screen.  If the "POSITION" and "SIZE" attributes are themable, "ORIGIN" is implied.
@@ -576,33 +624,51 @@ Can be created as an extra.
 	- If true, the image will be tiled instead of stretched to fit its size.  Useful for backgrounds.
 * `color` - type: COLOR.
 	- Multiply each pixel's color by this color. For example, an all-white image with `<color>FF0000</color>` would become completely red.  You can also control the transparency of an image with `<color>FFFFFFAA</color>` - keeping all the pixels their normal color and only affecting the alpha channel.
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.
 
 #### imagegrid
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
     - The size of the grid. Take care the selected tile can go out of the grid size, so don't position the grid too close to another element or the screen border.
-* `margin` - type: NORMALIZED_PAIR.
+* `margin` - type: RESOLUTION_PAIR. Margin between tiles.
+* `padding` - type: RESOLUTION_RECT.
+    - NEW : Padding for displaying tiles.
+* `autoLayout` - type: NORMALIZED_PAIR.
+    - NEW : Number of column and rows in the grid (integer values).
+* `autoLayoutSelectedZoom` - type: FLOAT.
+    - NEW : Zoom factor to apply when a tile is selected.
 * `gameImage` - type: PATH.
     - The default image used for games which doesn't have an image.
 * `folderImage` - type: PATH.
     - The default image used for folders which doesn't have an image.
+* `imageSource` - type: STRING.
+    - Selects the image to display. `thumbnail` by default, can also be set to `image` or `marquee`. 
 * `scrollDirection` - type: STRING.
     - `vertical` by default, can also be set to `horizontal`. Not that in `horizontal` mod, the tiles are ordered from top to bottom, then from left to right.
+* `centerSelection` - type: BOOLEAN.
+    - `false` by default, when `true` the selected tile will be locked to the center of the grid.
+* `scrollLoop` - type: BOOLEAN.
+    - `false` by default, when `true` the grid will seamlessly loop around when scrolling reaches the end of the list.  Only works when `centerSelection` is `true`.
+* `animate` - type : BOOLEAN.
+    - `true` by default, when  `false` the grid scrolling will not be animated.
+* `zIndex` - type: FLOAT.
+    - z-index value for component.  Components will be rendered in order of z-index value from low to high.
 
 #### gridtile
 
-* `size` - type: NORMALIZED_PAIR.
+* `size` - type: RESOLUTION_PAIR.
     - The size of the default gridtile is used to calculate how many tiles can fit in the imagegrid. If not explicitly set, the size of the selected gridtile is equal the size of the default gridtile * 1.2
-* `padding` - type: NORMALIZED_PAIR.
+* `padding` - type: RESOLUTION_PAIR.
     - The padding around the gridtile content. Default `16 16`. If not explicitly set, the selected tile padding will be equal to the default tile padding.
 * `imageColor` - type: COLOR.
     - The default tile image color and selected tile image color have no influence on each others.
 * `backgroundImage` - type: PATH.
     - If not explicitly set, the selected tile background image will be the same as the default tile background image.
-* `backgroundCornerSize` - type: NORMALIZED_PAIR.
+* `backgroundCornerSize` - type: RESOLUTION_PAIR.
     - The corner size of the ninepatch used for the tile background. Default is `16 16`.
 * `backgroundColor` - type: COLOR.
     - A shortcut to define both the center color and edge color at the same time. The default tile background color and selected tile background color have no influence on each others.
@@ -613,10 +679,10 @@ Can be created as an extra.
 
 #### video
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 	- If only one axis is specified (and the other is zero), the other will be automatically calculated in accordance with the video's aspect ratio.
-* `maxSize` - type: NORMALIZED_PAIR.
+* `maxSize` - type: RESOLUTION_PAIR.
 	- The video will be resized as large as possible so that it fits within this size and maintains its aspect ratio.  Use this instead of `size` when you don't know what kind of video you're using so it doesn't get grossly oversized on one axis (e.g. with a game's video metadata).
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the image `pos` refers to.  For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the image exactly in the middle of the screen.  If the "POSITION" and "SIZE" attributes are themable, "ORIGIN" is implied.
@@ -632,6 +698,8 @@ Can be created as an extra.
 	- If true, image will be shown when selected game does not have a video and no `default` video is configured.
 * `showSnapshotDelay` - type: BOOLEAN
 	- If true, playing of video will be delayed for `delayed` seconds, when game is selected.
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.
 
@@ -639,8 +707,8 @@ Can be created as an extra.
 
 Can be created as an extra.
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 	- Possible combinations:
 	- `0 0` - automatically size so text fits on one line (expanding horizontally).
 	- `w 0` - automatically wrap text so it doesn't go beyond `w` (expanding vertically).
@@ -656,19 +724,21 @@ Can be created as an extra.
 * `backgroundColor` - type: COLOR;
 * `fontPath` - type: PATH.
 	- Path to a truetype font (.ttf).
-* `fontSize` - type: FLOAT.
+* `fontSize` - type: RESOLUTION_FLOAT.
 	- Size of the font as a percentage of screen height (e.g. for a value of `0.1`, the text's height would be 10% of the screen height).
 * `alignment` - type: STRING.
 	- Valid values are "left", "center", or "right".  Controls alignment on the X axis.  "center" will also align vertically.
 * `forceUppercase` - type: BOOLEAN.  Draw text in uppercase.
 * `lineSpacing` - type: FLOAT.  Controls the space between lines (as a multiple of font height).  Default is 1.5.
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.
 
 #### textlist
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the component `pos` refers to.  For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the component exactly in the middle of the screen.  If the "POSITION" and "SIZE" attributes are themable, "ORIGIN" is implied.
 * `selectorColor` - type: COLOR.
@@ -677,9 +747,9 @@ Can be created as an extra.
 	- Path to image to render in place of "selector bar."
 * `selectorImageTile` - type: BOOLEAN.
 	- If true, the selector image will be tiled instead of stretched to fit its size.
-* `selectorHeight` - type: FLOAT.
+* `selectorHeight` - type: RESOLUTION_FLOAT.
 	- Height of the "selector bar".
-* `selectorOffsetY` - type: FLOAT.
+* `selectorOffsetY` - type: RESOLUTION_FLOAT.
 	- Allows moving of the "selector bar" up or down from its computed position.  Useful for fine tuning the position of the "selector bar" relative to the text.
 * `selectedColor` - type: COLOR.
 	- Color of the highlighted entry text.
@@ -688,12 +758,12 @@ Can be created as an extra.
 * `secondaryColor` - type: COLOR.
 	- Secondary color; what this means depends on the text list.  For example, for game lists, it is the color of a folder.
 * `fontPath` - type: PATH.
-* `fontSize` - type: FLOAT.
+* `fontSize` - type: RESOLUTION_FLOAT.
 * `scrollSound` - type: PATH.
 	- Sound that is played when the list is scrolled.
 * `alignment` - type: STRING.
 	- Valid values are "left", "center", or "right".  Controls alignment on the X axis.
-* `horizontalMargin` - type: FLOAT.
+* `horizontalMargin` - type: RESOLUTION_FLOAT.
 	- Horizontal offset for text from the alignment point.  If `alignment` is "left", offsets the text to the right.  If `alignment` is "right", offsets text to the left.  No effect if `alignment` is "center".  Given as a percentage of the element's parent's width (same unit as `size`'s X value).
 * `forceUppercase` - type: BOOLEAN.  Draw text in uppercase.
 * `lineSpacing` - type: FLOAT.  Controls the space between lines (as a multiple of font height).  Default is 1.5.
@@ -702,18 +772,20 @@ Can be created as an extra.
 
 #### ninepatch
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 * `path` - type: PATH.
-
-EmulationStation borrows the concept of "nine patches" from Android (or "9-Slices"). Currently the implementation is very simple and hard-coded to only use 48x48px images (16x16px for each "patch"). Check the `data/resources` directory for some examples (button.png, frame.png).
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.
 
+EmulationStation borrows the concept of "nine patches" from Android (or "9-Slices"). Currently the implementation is very simple and hard-coded to only use 48x48px images (16x16px for each "patch"). Check the `data/resources` directory for some examples (button.png, frame.png).
+
 #### rating
 
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 	- Only one value is actually used. The other value should be zero.  (e.g. specify width OR height, but not both.  This is done to maintain the aspect ratio.)
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the component `pos` refers to.  For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the component exactly in the middle of the screen.  If the "POSITION" and "SIZE" attributes are themable, "ORIGIN" is implied.
@@ -727,12 +799,14 @@ EmulationStation borrows the concept of "nine patches" from Android (or "9-Slice
 	- Path to the "unfilled star" image.  Image must be square (width equals height).
 * `color` - type: COLOR.
 	- Multiply each pixel's color by this color. For example, an all-white image with `<color>FF0000</color>` would become completely red.  You can also control the transparency of an image with `<color>FFFFFFAA</color>` - keeping all the pixels their normal color and only affecting the alpha channel.
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.	
 
 #### datetime
-* `pos` - type: NORMALIZED_PAIR.
-* `size` - type: NORMALIZED_PAIR.
+* `pos` - type: RESOLUTION_PAIR.
+* `size` - type: RESOLUTION_PAIR.
 	- Possible combinations:
 	- `0 0` - automatically size so text fits on one line (expanding horizontally).
 	- `w 0` - automatically wrap text so it doesn't go beyond `w` (expanding vertically).
@@ -747,12 +821,14 @@ EmulationStation borrows the concept of "nine patches" from Android (or "9-Slice
 * `backgroundColor` - type: COLOR;
 * `fontPath` - type: PATH.
 	- Path to a truetype font (.ttf).
-* `fontSize` - type: FLOAT.
+* `fontSize` - type: RESOLUTION_FLOAT.
 	- Size of the font as a percentage of screen height (e.g. for a value of `0.1`, the text's height would be 10% of the screen height).
 * `alignment` - type: STRING.
 	- Valid values are "left", "center", or "right".  Controls alignment on the X axis.  "center" will also align vertically.
 * `forceUppercase` - type: BOOLEAN.  Draw text in uppercase.
 * `lineSpacing` - type: FLOAT.  Controls the space between lines (as a multiple of font height).  Default is 1.5.
+* `visible` - type: BOOLEAN.
+    - If true, component will be rendered, otherwise rendering will be skipped.  Can be used to hide elements from a particular view.
 * `zIndex` - type: FLOAT.
 	- z-index value for component.  Components will be rendered in order of z-index value from low to high.
 * `displayRelative` - type: BOOLEAN.  Renders the datetime as a a relative string (ex: 'x days ago')
@@ -771,13 +847,13 @@ EmulationStation borrows the concept of "nine patches" from Android (or "9-Slice
 
 #### helpsystem
 
-* `pos` - type: NORMALIZED_PAIR.  Default is "0.012 0.9515"
+* `pos` - type: RESOLUTION_PAIR.  Default is "0.012 0.9515"
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the component `pos` refers to. For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the component exactly in the middle of the screen.
 * `textColor` - type: COLOR.  Default is 777777FF.
 * `iconColor` - type: COLOR.  Default is 777777FF.
 * `fontPath` - type: PATH.
-* `fontSize` - type: FLOAT.
+* `fontSize` - type: RESOLUTION_FLOAT.
 
 #### carousel
 
@@ -785,8 +861,8 @@ EmulationStation borrows the concept of "nine patches" from Android (or "9-Slice
 	- Sets the scoll direction of the carousel.
 	- Accepted values are "horizontal", "vertical", "horizontal_wheel" or "vertical_wheel".
 	- Default is "horizontal".
-* `size` - type: NORMALIZED_PAIR. Default is "1 0.2325"
-* `pos` - type: NORMALIZED_PAIR.  Default is "0 0.38375".
+* `size` - type: RESOLUTION_PAIR. Default is "1 0.2325"
+* `pos` - type: RESOLUTION_PAIR.  Default is "0 0.38375".
 * `origin` - type: NORMALIZED_PAIR.
 	- Where on the carousel `pos` refers to.  For example, an origin of `0.5 0.5` and a `pos` of `0.5 0.5` would place the carousel exactly in the middle of the screen.  If the "POSITION" and "SIZE" attributes are themable, "ORIGIN" is implied.
 * `color` - type: COLOR.

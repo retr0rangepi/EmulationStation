@@ -50,11 +50,8 @@ SystemData::SystemData(const std::string& name, const std::string& fullName, Sys
 
 SystemData::~SystemData()
 {
-	//save changed game data back to xml
-	if(!Settings::getInstance()->getBool("IgnoreGamelist") && Settings::getInstance()->getBool("SaveGamelistsOnExit") && !mIsCollectionSystem)
-	{
-		updateGamelist(this);
-	}
+	if(Settings::getInstance()->getString("SaveGamelistsMode") == "on exit")
+		writeMetaData();
 
 	delete mRootFolder;
 	delete mFilterIndex;
@@ -346,7 +343,7 @@ std::string SystemData::getConfigPath(bool forWrite)
 
 bool SystemData::isVisible()
 {
-   return (getDisplayedGameCount() > 0 || 
+   return (getDisplayedGameCount() > 0 ||
            (UIModeController::getInstance()->isUIModeFull() && mIsCollectionSystem) ||
            (mIsCollectionSystem && mName == "favorites"));
 }
@@ -494,11 +491,26 @@ void SystemData::loadTheme()
 		sysData.insert(std::pair<std::string, std::string>("system.name", getName()));
 		sysData.insert(std::pair<std::string, std::string>("system.theme", getThemeFolder()));
 		sysData.insert(std::pair<std::string, std::string>("system.fullName", getFullName()));
-		
+
 		mTheme->loadFile(sysData, path);
 	} catch(ThemeException& e)
 	{
 		LOG(LogError) << e.what();
 		mTheme = std::make_shared<ThemeData>(); // reset to empty
 	}
+}
+
+void SystemData::writeMetaData() {
+	if(Settings::getInstance()->getBool("IgnoreGamelist") || mIsCollectionSystem)
+		return;
+
+	//save changed game data back to xml
+	updateGamelist(this);
+}
+
+void SystemData::onMetaDataSavePoint() {
+	if(Settings::getInstance()->getString("SaveGamelistsMode") != "always")
+		return;
+
+	writeMetaData();
 }

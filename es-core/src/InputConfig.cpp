@@ -93,7 +93,7 @@ bool InputConfig::isMappedTo(const std::string& name, Input input)
 	Input comp;
 	if(!getInputByName(name, &comp))
 		return false;
-	
+
 	if(comp.configured && comp.type == input.type && comp.id == input.id)
 	{
 		if(comp.type == TYPE_HAT)
@@ -122,6 +122,10 @@ bool InputConfig::isMappedLike(const std::string& name, Input input)
 		return isMappedTo("up", input) || isMappedTo("leftanalogup", input) || isMappedTo("rightanalogup", input);
 	}else if(name == "down"){
 		return isMappedTo("down", input) || isMappedTo("leftanalogdown", input) || isMappedTo("rightanalogdown", input);
+	}else if(name == "leftshoulder"){
+		return isMappedTo("leftshoulder", input) || isMappedTo("pageup", input);
+	}else if(name == "rightshoulder"){
+		return isMappedTo("rightshoulder", input) || isMappedTo("pagedown", input);
 	}
 	return isMappedTo(name, input);
 }

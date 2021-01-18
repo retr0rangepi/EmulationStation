@@ -3,11 +3,13 @@
 #define ES_CORE_SETTINGS_H
 
 #include <map>
+#include <string>
 
 //This is a singleton for storing settings.
 class Settings
 {
 public:
+	static const int ONE_MINUTE_IN_MS = 1000 * 60;
 	static Settings* getInstance();
 
 	void loadFile();
@@ -31,6 +33,7 @@ private:
 
 	//Clear everything and load default values.
 	void setDefaults();
+	void processBackwardCompatibility();
 
 	std::map<std::string, bool> mBoolMap;
 	std::map<std::string, int> mIntMap;

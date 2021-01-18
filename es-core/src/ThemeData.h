@@ -3,6 +3,7 @@
 #define ES_CORE_THEME_DATA_H
 
 #include "math/Vector2f.h"
+#include "math/Vector4f.h"
 #include "utils/FileSystemUtil.h"
 #include <deque>
 #include <map>
@@ -41,6 +42,7 @@ namespace ThemeFlags
 		DELAY = 4096,
 		Z_INDEX = 8192,
 		ROTATION = 16384,
+		VISIBLE = 32768,
 		ALL = 0xFFFFFFFF
 	};
 }
@@ -54,7 +56,7 @@ public:
 
 	template<typename T>
 	friend ThemeException& operator<<(ThemeException& e, T msg);
-	
+
 	inline void setFiles(const std::deque<std::string>& deque)
 	{
 		*this << "from theme \"" << deque.front() << "\"\n";
@@ -93,12 +95,14 @@ public:
 
 		struct Property
 		{
+			void operator= (const Vector4f& value)     { r = value; v = Vector2f(value.x(), value.y()); }
 			void operator= (const Vector2f& value)     { v = value; }
 			void operator= (const std::string& value)  { s = value; }
 			void operator= (const unsigned int& value) { i = value; }
 			void operator= (const float& value)        { f = value; }
 			void operator= (const bool& value)         { b = value; }
 
+			Vector4f     r;
 			Vector2f     v;
 			std::string  s;
 			unsigned int i;
@@ -116,6 +120,7 @@ public:
 			else if(std::is_same<T, unsigned int>::value) return *(const T*)&properties.at(prop).i;
 			else if(std::is_same<T, float>::value)        return *(const T*)&properties.at(prop).f;
 			else if(std::is_same<T, bool>::value)         return *(const T*)&properties.at(prop).b;
+			else if(std::is_same<T, Vector4f>::value)     return *(const T*)&properties.at(prop).r;
 			return T();
 		}
 
@@ -139,6 +144,10 @@ public:
 
 	enum ElementPropertyType
 	{
+		RESOLUTION_RECT,
+		RESOLUTION_PAIR,
+		RESOLUTION_FLOAT,
+		NORMALIZED_RECT,
 		NORMALIZED_PAIR,
 		PATH,
 		STRING,
@@ -166,6 +175,7 @@ private:
 
 	std::deque<std::string> mPaths;
 	float mVersion;
+	Vector2f mResolution;
 
 	void parseFeatures(const pugi::xml_node& themeRoot);
 	void parseIncludes(const pugi::xml_node& themeRoot);

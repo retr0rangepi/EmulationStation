@@ -4,8 +4,8 @@
 
 #include "math/Vector2f.h"
 #include "math/Vector2i.h"
+#include "renderers/Renderer.h"
 #include "resources/ResourceManager.h"
-#include "Renderer.h"
 #include "ThemeData.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -45,7 +45,7 @@ public:
 	TextCache* buildTextCache(const std::string& text, float offsetX, float offsetY, unsigned int color);
 	TextCache* buildTextCache(const std::string& text, Vector2f offset, unsigned int color, float xLen, Alignment alignment = ALIGN_LEFT, float lineSpacing = 1.5f);
 	void renderTextCache(TextCache* cache);
-	
+
 	std::string wrapText(std::string text, float xLen); // Inserts newlines into text to make it wrap properly.
 	Vector2f sizeWrappedText(std::string text, float xLen, float lineSpacing = 1.5f); // Returns the expected size of a string after wrapping is applied.
 	Vector2f getWrappedTextCursorOffset(std::string text, float xLen, size_t cursor, float lineSpacing = 1.5f); // Returns the position of of the cursor after moving "cursor" characters.
@@ -53,8 +53,8 @@ public:
 	float getHeight(float lineSpacing = 1.5f) const;
 	float getLetterHeight();
 
-	void unload(std::shared_ptr<ResourceManager>& rm) override;
-	void reload(std::shared_ptr<ResourceManager>& rm) override;
+	bool unload() override;
+	void reload() override;
 
 	int getSize() const;
 	inline const std::string& getPath() const { return mPath; }
@@ -74,7 +74,7 @@ private:
 
 	struct FontTexture
 	{
-		GLuint textureId;
+		unsigned int textureId;
 		Vector2i textureSize;
 
 		Vector2i writePos;
@@ -112,7 +112,7 @@ private:
 	struct Glyph
 	{
 		FontTexture* texture;
-		
+
 		Vector2f texPos;
 		Vector2f texSize; // in texels!
 
@@ -125,11 +125,13 @@ private:
 	Glyph* getGlyph(unsigned int id);
 
 	int mMaxGlyphHeight;
-	
+
 	const int mSize;
 	const std::string mPath;
 
 	float getNewlineStartOffset(const std::string& text, const unsigned int& charStart, const float& xLen, const Alignment& alignment);
+
+	bool mLoaded;
 
 	friend TextCache;
 };
@@ -141,17 +143,11 @@ private:
 class TextCache
 {
 protected:
-	struct Vertex
-	{
-		Vector2f pos;
-		Vector2f tex;
-	};
 
 	struct VertexList
 	{
-		GLuint* textureIdPtr; // this is a pointer because the texture ID can change during deinit/reinit (when launching a game)
-		std::vector<Vertex> verts;
-		std::vector<GLubyte> colors;
+		std::vector<Renderer::Vertex> verts;
+		unsigned int* textureIdPtr; // this is a pointer because the texture ID can change during deinit/reinit (when launching a game)
 	};
 
 	std::vector<VertexList> vertexLists;

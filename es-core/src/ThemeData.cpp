@@ -3,6 +3,7 @@
 #include "components/ImageComponent.h"
 #include "components/TextComponent.h"
 #include "utils/FileSystemUtil.h"
+#include "utils/StringUtil.h"
 #include "Log.h"
 #include "platform.h"
 #include "Settings.h"
@@ -10,92 +11,108 @@
 #include <algorithm>
 
 std::vector<std::string> ThemeData::sSupportedViews { { "system" }, { "basic" }, { "detailed" }, { "grid" }, { "video" } };
-std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" } };
+std::vector<std::string> ThemeData::sSupportedFeatures { { "video" }, { "carousel" }, { "z-index" }, { "visible" } };
 
 std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> ThemeData::sElementMap {
 	{ "image", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
-		{ "maxSize", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
+		{ "maxSize", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
-	 	{ "rotation", FLOAT },
+		{ "rotation", FLOAT },
 		{ "rotationOrigin", NORMALIZED_PAIR },
 		{ "path", PATH },
 		{ "default", PATH },
 		{ "tile", BOOLEAN },
 		{ "color", COLOR },
+		{ "colorEnd", COLOR },
+		{ "gradientType", STRING },
+		{ "visible", BOOLEAN },
 		{ "zIndex", FLOAT } } },
 	{ "imagegrid", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
-		{ "margin", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
+		{ "margin", RESOLUTION_PAIR },
+		{ "padding", RESOLUTION_RECT },
+		{ "autoLayout", NORMALIZED_PAIR },
+		{ "autoLayoutSelectedZoom", FLOAT },
 		{ "gameImage", PATH },
 		{ "folderImage", PATH },
-		{ "scrollDirection", STRING } } },
+		{ "imageSource", STRING },
+		{ "scrollDirection", STRING },
+		{ "centerSelection", BOOLEAN },
+		{ "scrollLoop", BOOLEAN },
+		{ "animate", BOOLEAN },
+		{ "zIndex", FLOAT } } },
 	{ "gridtile", {
-		{ "size", NORMALIZED_PAIR },
-		{ "padding", NORMALIZED_PAIR },
+		{ "size", RESOLUTION_PAIR },
+		{ "padding", RESOLUTION_PAIR },
 		{ "imageColor", COLOR },
 		{ "backgroundImage", PATH },
-		{ "backgroundCornerSize", NORMALIZED_PAIR },
+		{ "backgroundCornerSize", RESOLUTION_PAIR },
 		{ "backgroundColor", COLOR },
 		{ "backgroundCenterColor", COLOR },
 		{ "backgroundEdgeColor", COLOR } } },
 	{ "text", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "rotation", FLOAT },
 		{ "rotationOrigin", NORMALIZED_PAIR },
 		{ "text", STRING },
 		{ "backgroundColor", COLOR },
 		{ "fontPath", PATH },
-		{ "fontSize", FLOAT },
+		{ "fontSize", RESOLUTION_FLOAT },
 		{ "color", COLOR },
 		{ "alignment", STRING },
 		{ "forceUppercase", BOOLEAN },
 		{ "lineSpacing", FLOAT },
 		{ "value", STRING },
+		{ "visible", BOOLEAN },
 		{ "zIndex", FLOAT } } },
 	{ "textlist", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
-		{ "selectorHeight", FLOAT },
-		{ "selectorOffsetY", FLOAT },
+		{ "selectorHeight", RESOLUTION_FLOAT },
+		{ "selectorOffsetY", RESOLUTION_FLOAT },
 		{ "selectorColor", COLOR },
+		{ "selectorColorEnd", COLOR },
+		{ "selectorGradientType", STRING },
 		{ "selectorImagePath", PATH },
 		{ "selectorImageTile", BOOLEAN },
 		{ "selectedColor", COLOR },
 		{ "primaryColor", COLOR },
 		{ "secondaryColor", COLOR },
 		{ "fontPath", PATH },
-		{ "fontSize", FLOAT },
+		{ "fontSize", RESOLUTION_FLOAT },
 		{ "scrollSound", PATH },
 		{ "alignment", STRING },
-		{ "horizontalMargin", FLOAT },
+		{ "horizontalMargin", RESOLUTION_FLOAT },
 		{ "forceUppercase", BOOLEAN },
 		{ "lineSpacing", FLOAT },
 		{ "zIndex", FLOAT } } },
 	{ "container", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 	 	{ "origin", NORMALIZED_PAIR },
-		{ "zIndex", FLOAT } } },
+	 	{ "visible", BOOLEAN },
+	 	{ "zIndex", FLOAT } } },
 	{ "ninepatch", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 		{ "path", PATH },
+	 	{ "visible", BOOLEAN },
 		{ "zIndex", FLOAT } } },
 	{ "datetime", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "rotation", FLOAT },
 		{ "rotationOrigin", NORMALIZED_PAIR },
 		{ "backgroundColor", COLOR },
 		{ "fontPath", PATH },
-		{ "fontSize", FLOAT },
+		{ "fontSize", RESOLUTION_FLOAT },
 		{ "color", COLOR },
 		{ "alignment", STRING },
 		{ "forceUppercase", BOOLEAN },
@@ -103,44 +120,49 @@ std::map<std::string, std::map<std::string, ThemeData::ElementPropertyType>> The
 		{ "value", STRING },
 		{ "format", STRING },
 		{ "displayRelative", BOOLEAN },
-		{ "zIndex", FLOAT } } },
+	 	{ "visible", BOOLEAN },
+	 	{ "zIndex", FLOAT } } },
 	{ "rating", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "rotation", FLOAT },
 		{ "rotationOrigin", NORMALIZED_PAIR },
 		{ "color", COLOR },
 		{ "filledPath", PATH },
 		{ "unfilledPath", PATH },
+		{ "visible", BOOLEAN },
 		{ "zIndex", FLOAT } } },
 	{ "sound", {
 		{ "path", PATH } } },
 	{ "helpsystem", {
-		{ "pos", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "textColor", COLOR },
 		{ "iconColor", COLOR },
 		{ "fontPath", PATH },
-		{ "fontSize", FLOAT } } },
+		{ "fontSize", RESOLUTION_FLOAT } } },
 	{ "video", {
-		{ "pos", NORMALIZED_PAIR },
-		{ "size", NORMALIZED_PAIR },
-		{ "maxSize", NORMALIZED_PAIR },
+		{ "pos", RESOLUTION_PAIR },
+		{ "size", RESOLUTION_PAIR },
+		{ "maxSize", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "rotation", FLOAT },
 		{ "rotationOrigin", NORMALIZED_PAIR },
 		{ "default", PATH },
 		{ "delay", FLOAT },
-		{ "zIndex", FLOAT },
+	 	{ "visible", BOOLEAN },
+	 	{ "zIndex", FLOAT },
 		{ "showSnapshotNoVideo", BOOLEAN },
 		{ "showSnapshotDelay", BOOLEAN } } },
 	{ "carousel", {
 		{ "type", STRING },
-		{ "size", NORMALIZED_PAIR },
-		{ "pos", NORMALIZED_PAIR },
+		{ "size", RESOLUTION_PAIR },
+		{ "pos", RESOLUTION_PAIR },
 		{ "origin", NORMALIZED_PAIR },
 		{ "color", COLOR },
+		{ "colorEnd", COLOR },
+		{ "gradientType", STRING },
 		{ "logoScale", FLOAT },
 		{ "logoRotation", FLOAT },
 		{ "logoRotationOrigin", NORMALIZED_PAIR },
@@ -200,6 +222,7 @@ std::string resolvePlaceholders(const char* in)
 ThemeData::ThemeData()
 {
 	mVersion = 0;
+	mResolution = { 1, 1 };
 }
 
 void ThemeData::loadFile(std::map<std::string, std::string> sysDataMap, const std::string& path)
@@ -213,6 +236,7 @@ void ThemeData::loadFile(std::map<std::string, std::string> sysDataMap, const st
 		throw error << "File does not exist!";
 
 	mVersion = 0;
+	mResolution = { 1, 1 };
 	mViews.clear();
 	mVariables.clear();
 
@@ -234,6 +258,23 @@ void ThemeData::loadFile(std::map<std::string, std::string> sysDataMap, const st
 
 	if(mVersion < MINIMUM_THEME_FORMAT_VERSION)
 		throw error << "Theme uses format version " << mVersion << ". Minimum supported version is " << MINIMUM_THEME_FORMAT_VERSION << ".";
+
+	// parse resolution
+	std::string resolution = root.child("resolution").text().as_string("");
+
+	if(resolution.size())
+	{
+		size_t divider = resolution.find(' ');
+
+		if(divider != std::string::npos)
+		{
+			std::string w = resolution.substr(0, divider);
+			std::string h = resolution.substr(divider, std::string::npos);
+
+			mResolution.x() = (float)atof(w.c_str());
+			mResolution.y() = (float)atof(h.c_str());
+		}
+	}
 
 	parseVariables(root);
 	parseIncludes(root);
@@ -298,16 +339,16 @@ void ThemeData::parseVariables(const pugi::xml_node& root)
 {
 	ThemeException error;
 	error.setFiles(mPaths);
-    
+
 	pugi::xml_node variables = root.child("variables");
 
 	if(!variables)
 		return;
-    
+
 	for(pugi::xml_node_iterator it = variables.begin(); it != variables.end(); ++it)
 	{
 		std::string key = it->name();
-		std::string val = it->text().as_string();
+		std::string val = resolvePlaceholders(it->text().as_string());
 
 		if (!val.empty())
 			mVariables.insert(std::pair<std::string, std::string>(key, val));
@@ -335,7 +376,7 @@ void ThemeData::parseViews(const pugi::xml_node& root)
 			viewKey = nameAttr.substr(prevOff, off - prevOff);
 			prevOff = nameAttr.find_first_not_of(delim, off);
 			off = nameAttr.find_first_of(delim, prevOff);
-			
+
 			if (std::find(sSupportedViews.cbegin(), sSupportedViews.cend(), viewKey) != sSupportedViews.cend())
 			{
 				ThemeView& view = mViews.insert(std::pair<std::string, ThemeView>(viewKey, ThemeView())).first->second;
@@ -368,8 +409,8 @@ void ThemeData::parseView(const pugi::xml_node& root, ThemeView& view)
 			std::string elemKey = nameAttr.substr(prevOff, off - prevOff);
 			prevOff = nameAttr.find_first_not_of(delim, off);
 			off = nameAttr.find_first_of(delim, prevOff);
-			
-			parseElement(node, elemTypeIt->second, 
+
+			parseElement(node, elemTypeIt->second,
 				view.elements.insert(std::pair<std::string, ThemeElement>(elemKey, ThemeElement())).first->second);
 
 			if(std::find(view.orderedKeys.cbegin(), view.orderedKeys.cend(), elemKey) == view.orderedKeys.cend())
@@ -386,7 +427,7 @@ void ThemeData::parseElement(const pugi::xml_node& root, const std::map<std::str
 
 	element.type = root.name();
 	element.extra = root.attribute("extra").as_bool(false);
-	
+
 	for(pugi::xml_node node = root.first_child(); node; node = node.next_sibling())
 	{
 		auto typeIt = typeMap.find(node.name());
@@ -397,10 +438,68 @@ void ThemeData::parseElement(const pugi::xml_node& root, const std::map<std::str
 
 		switch(typeIt->second)
 		{
+		case RESOLUTION_RECT:
+		{
+			Vector4f val;
+
+			auto splits = Utils::String::delimitedStringToVector(str, " ");
+			if (splits.size() == 2)
+			{
+				val = Vector4f((float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()),
+					(float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()));
+			}
+			else if (splits.size() == 4)
+			{
+				val = Vector4f((float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()),
+					(float)atof(splits.at(2).c_str()), (float)atof(splits.at(3).c_str()));
+			}
+
+			element.properties[node.name()] = val / Vector4f(mResolution.x(), mResolution.y(), mResolution.x(), mResolution.y());
+			break;
+		}
+		case RESOLUTION_PAIR:
+		{
+			size_t divider = str.find(' ');
+			if(divider == std::string::npos)
+				throw error << "invalid normalized pair (property \"" << node.name() << "\", value \"" << str.c_str() << "\")";
+
+			std::string first = str.substr(0, divider);
+			std::string second = str.substr(divider, std::string::npos);
+
+			Vector2f val((float)atof(first.c_str()), (float)atof(second.c_str()));
+
+			element.properties[node.name()] = val / mResolution;
+			break;
+		}
+		case RESOLUTION_FLOAT:
+		{
+			float val = static_cast<float>(strtod(str.c_str(), 0));
+			element.properties[node.name()] = val / mResolution.y();
+			break;
+		}
+		case NORMALIZED_RECT:
+		{
+			Vector4f val;
+
+			auto splits = Utils::String::delimitedStringToVector(str, " ");
+			if (splits.size() == 2)
+			{
+				val = Vector4f((float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()),
+					(float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()));
+			}
+			else if (splits.size() == 4)
+			{
+				val = Vector4f((float)atof(splits.at(0).c_str()), (float)atof(splits.at(1).c_str()),
+					(float)atof(splits.at(2).c_str()), (float)atof(splits.at(3).c_str()));
+			}
+
+			element.properties[node.name()] = val;
+			break;
+		}
 		case NORMALIZED_PAIR:
 		{
 			size_t divider = str.find(' ');
-			if(divider == std::string::npos) 
+			if(divider == std::string::npos)
 				throw error << "invalid normalized pair (property \"" << node.name() << "\", value \"" << str.c_str() << "\")";
 
 			std::string first = str.substr(0, divider);
@@ -472,7 +571,7 @@ const ThemeData::ThemeElement* ThemeData::getElement(const std::string& view, co
 
 	if(elemIt->second.type != expectedType && !expectedType.empty())
 	{
-		LOG(LogWarning) << " requested mismatched theme type for [" << view << "." << element << "] - expected \"" 
+		LOG(LogWarning) << " requested mismatched theme type for [" << view << "." << element << "] - expected \""
 			<< expectedType << "\", got \"" << elemIt->second.type << "\"";
 		return NULL;
 	}
@@ -512,7 +611,7 @@ std::vector<GuiComponent*> ThemeData::makeExtras(const std::shared_ptr<ThemeData
 	auto viewIt = theme->mViews.find(view);
 	if(viewIt == theme->mViews.cend())
 		return comps;
-	
+
 	for(auto it = viewIt->second.orderedKeys.cbegin(); it != viewIt->second.orderedKeys.cend(); it++)
 	{
 		ThemeElement& elem = viewIt->second.elements.at(*it);
@@ -540,9 +639,9 @@ std::map<std::string, ThemeSet> ThemeData::getThemeSets()
 
 	static const size_t pathCount = 2;
 	std::string paths[pathCount] =
-	{ 
-		"/etc/emulationstation/themes", 
-		Utils::FileSystem::getHomePath() + "/.emulationstation/themes" 
+	{
+		"/etc/emulationstation/themes",
+		Utils::FileSystem::getHomePath() + "/.emulationstation/themes"
 	};
 
 	for(size_t i = 0; i < pathCount; i++)

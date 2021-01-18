@@ -14,7 +14,7 @@ using namespace PlatformIds;
 
 /**
 	List of systems and their IDs from
-	https://www.screenscraper.fr/api/systemesListe.php?devid=xxx&devpassword=yyy&softname=zzz&output=XML
+	https://www.screenscraper.fr/api2/systemesListe.php?devid=xxx&devpassword=yyy&softname=zzz&output=XML
 **/
 const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ THREEDO, 29 },
@@ -22,15 +22,16 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ AMSTRAD_CPC, 65 },
 	{ APPLE_II, 86 },
 	{ ARCADE, 75 },
-	{ ATARI_800, 26 }, // Use ATARI_2600 as an alias for atari 800
+	{ ATARI_800, 43 },
 	{ ATARI_2600, 26 },
 	{ ATARI_5200, 40 },
 	{ ATARI_7800, 41 },
 	{ ATARI_JAGUAR, 27 },
 	{ ATARI_JAGUAR_CD, 171 },
 	{ ATARI_LYNX, 28 },
-	{ ATARI_ST, 42},
-	// missing Atari XE ?
+	{ ATARI_ST, 42 },
+	{ ATARI_XE, 43 },
+	{ BBC_MICRO, 37 },
 	{ COLECOVISION, 48 },
 	{ COMMODORE_64, 66 },
 	{ INTELLIVISION, 115 },
@@ -46,6 +47,7 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ NINTENDO_DS, 15 },
 	{ FAMICOM_DISK_SYSTEM, 106 },
 	{ NINTENDO_ENTERTAINMENT_SYSTEM, 3 },
+	{ FAIRCHILD_CHANNELF, 80 },
 	{ GAME_BOY, 9 },
 	{ GAME_BOY_ADVANCE, 12 },
 	{ GAME_BOY_COLOR, 10 },
@@ -55,6 +57,7 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ NINTENDO_VIRTUAL_BOY, 11 },
 	{ NINTENDO_GAME_AND_WATCH, 52 },
 	{ PC, 135 },
+	{ OPENBOR, 214 },
 	{ SCUMMVM, 123},
 	{ SEGA_32X, 19 },
 	{ SEGA_CD, 20 },
@@ -65,7 +68,12 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ SEGA_MEGA_DRIVE, 1 },
 	{ SEGA_SATURN, 22 },
 	{ SEGA_SG1000, 109 },
+	{ SHARP_X1, 220},
 	{ SHARP_X6800, 79},
+	{ SOLARUS, 223 },
+	{ THOMSON_MOTO, 141},
+	{ NEC_PC_8801, 221},
+	{ NEC_PC_9801, 208},
 	{ PLAYSTATION, 57 },
 	{ PLAYSTATION_2, 58 },
 	{ PLAYSTATION_3, 59 },
@@ -78,6 +86,7 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ WONDERSWAN, 45 },
 	{ WONDERSWAN_COLOR, 46 },
 	{ ZX_SPECTRUM, 76 },
+	{ ZX81_SINCLAR, 77 },
 	{ VIDEOPAC_ODYSSEY2, 104 },
 	{ VECTREX, 102 },
 	{ TRS80_COLOR_COMPUTER, 144 },
@@ -127,19 +136,32 @@ void screenscraper_generate_scraper_requests(const ScraperSearchParams& params,
 
 	path = ssConfig.getGameSearchUrl(params.game->getFileName());
 	auto& platforms = params.system->getPlatformIds();
+	std::vector<unsigned short> p_ids;
 
+	// Get the IDs of each platform from the ScreenScraper list
 	for (auto platformIt = platforms.cbegin(); platformIt != platforms.cend(); platformIt++)
 	{
 		auto mapIt = screenscraper_platformid_map.find(*platformIt);
 
 		if (mapIt != screenscraper_platformid_map.cend())
 		{
-			path += "&systemeid=";
-			path += HttpReq::urlEncode(std::to_string(mapIt->second));
+			p_ids.push_back(mapIt->second);
 		}else{
 			LOG(LogWarning) << "ScreenScraper: no support for platform " << getPlatformName(*platformIt);
+			// Add the scrape request without a platform/system ID
+			requests.push(std::unique_ptr<ScraperRequest>(new ScreenScraperRequest(requests, results, path)));
 		}
+	}
 
+	// Sort the platform IDs and remove duplicates
+	std::sort(p_ids.begin(), p_ids.end());
+	auto last = std::unique(p_ids.begin(), p_ids.end());
+	p_ids.erase(last, p_ids.end());
+
+	for (auto platform = p_ids.cbegin(); platform != p_ids.cend(); platform++)
+	{
+		path += "&systemeid=";
+		path += HttpReq::urlEncode(std::to_string(*platform));
 		requests.push(std::unique_ptr<ScraperRequest>(new ScreenScraperRequest(requests, results, path)));
 	}
 
@@ -182,7 +204,7 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 		std::string region = Utils::String::toLower(ssConfig.region).c_str();
 		std::string language = Utils::String::toLower(ssConfig.language).c_str();
 
-		// Name fallback: US, WOR(LD). ( Xpath: Data/jeu[0]/noms/nom[*] ). 
+		// Name fallback: US, WOR(LD). ( Xpath: Data/jeu[0]/noms/nom[*] ).
 		result.mdl.set("name", find_child_by_attribute_list(game.child("noms"), "nom", "region", { region, "wor", "us" , "ss", "eu", "jp" }).text().get());
 
 		// Description fallback language: EN, WOR(LD)
@@ -243,7 +265,7 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 
 			// Do an XPath query for media[type='$media_type'], then filter by region
 			// We need to do this because any child of 'medias' has the form
-			// <media type="..." region="..." format="..."> 
+			// <media type="..." region="..." format="...">
 			// and we need to find the right media for the region.
 			pugi::xpath_node_set results = media_list.select_nodes((static_cast<std::string>("media[@type='") + ssConfig.media_name + "']").c_str());
 
@@ -268,7 +290,7 @@ void ScreenScraperRequest::processGame(const pugi::xml_document& xmldoc, std::ve
 
 			if (art)
 			{
-				// Sending a 'softname' containing space will make the image URLs returned by the API also contain the space. 
+				// Sending a 'softname' containing space will make the image URLs returned by the API also contain the space.
 				//  Escape any spaces in the URL here
 				result.imageUrl = Utils::String::replace(art.text().get(), " ", "%20");
 

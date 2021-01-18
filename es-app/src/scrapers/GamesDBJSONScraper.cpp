@@ -50,6 +50,7 @@ const std::map<PlatformId, std::string> gamesdb_new_platformid_map{
 	{ ATARI_XE, "30" },
 	{ COLECOVISION, "31" },
 	{ COMMODORE_64, "40" },
+	{ DAPHNE, "23" },
 	{ INTELLIVISION, "32" },
 	{ MAC_OS, "37" },
 	{ XBOX, "14" },
@@ -88,6 +89,10 @@ const std::map<PlatformId, std::string> gamesdb_new_platformid_map{
 	{ PLAYSTATION_VITA, "39" },
 	{ PLAYSTATION_PORTABLE, "13" },
 	{ SUPER_NINTENDO, "6" },
+	{ SHARP_X1, "4977" },
+	{ SHARP_X6800, "4931"},
+	{ NEC_PC_8801, "4933"},
+	{ NEC_PC_9801, "4934"},
 	{ TURBOGRAFX_16, "34" },   // HuCards only
 	{ TURBOGRAFX_CD, "4955" }, // CD-ROMs only
 	{ WONDERSWAN, "4925" },
@@ -103,7 +108,7 @@ void thegamesdb_generate_json_scraper_requests(const ScraperSearchParams& params
 	std::queue<std::unique_ptr<ScraperRequest>>& requests, std::vector<ScraperSearchResult>& results)
 {
 	resources.prepare();
-	std::string path = "https://api.thegamesdb.net";
+	std::string path = "https://api.thegamesdb.net/v1";
 	bool usingGameID = false;
 	const std::string apiKey = std::string("apikey=") + resources.getApiKey();
 	std::string cleanName = params.nameOverride;

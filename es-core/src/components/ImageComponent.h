@@ -2,10 +2,9 @@
 #ifndef ES_CORE_COMPONENTS_IMAGE_COMPONENT_H
 #define ES_CORE_COMPONENTS_IMAGE_COMPONENT_H
 
+#include "renderers/Renderer.h"
 #include "math/Vector2i.h"
 #include "GuiComponent.h"
-#include "platform.h"
-#include GLHEADER
 
 class TextureResource;
 
@@ -56,6 +55,8 @@ public:
 
 	// Multiply all pixels in the image by this color when rendering.
 	void setColorShift(unsigned int color);
+	void setColorShiftEnd(unsigned int color);
+	void setColorGradientHorizontal(bool horizontal);
 
 	void setFlipX(bool flip); // Mirror on the X axis.
 	void setFlipY(bool flip); // Mirror on the Y axis.
@@ -74,6 +75,8 @@ public:
 	virtual void applyTheme(const std::shared_ptr<ThemeData>& theme, const std::string& view, const std::string& element, unsigned int properties) override;
 
 	virtual std::vector<HelpPrompt> getHelpPrompts() override;
+
+	std::shared_ptr<TextureResource> getTexture() { return mTexture; };
 private:
 	Vector2f mTargetSize;
 
@@ -83,19 +86,15 @@ private:
 	// Used internally whenever the resizing parameters or texture change.
 	void resize();
 
-	struct Vertex
-	{
-		Vector2f pos;
-		Vector2f tex;
-	} mVertices[6];
-
-	GLubyte mColors[6*4];
+	Renderer::Vertex mVertices[4];
 
 	void updateVertices();
 	void updateColors();
 	void fadeIn(bool textureLoaded);
 
 	unsigned int mColorShift;
+	unsigned int mColorShiftEnd;
+	bool mColorGradientHorizontal;
 
 	std::string mDefaultPath;
 

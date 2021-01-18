@@ -23,6 +23,7 @@ FileData::FileData(FileType type, const std::string& path, SystemEnvironmentData
 	if(metadata.get("name").empty())
 		metadata.set("name", getDisplayName());
 	mSystemName = system->getName();
+	metadata.resetChangedFlag();
 }
 
 FileData::~FileData()
@@ -309,6 +310,8 @@ void FileData::launchGame(Window* window)
 	//update last played time
 	gameToUpdate->metadata.set("lastplayed", Utils::Time::DateTime(Utils::Time::now()));
 	CollectionSystemManager::get()->refreshCollectionSystems(gameToUpdate);
+
+	gameToUpdate->mSystem->onMetaDataSavePoint();
 }
 
 CollectionFileData::CollectionFileData(FileData* file, SystemData* system)
@@ -348,11 +351,14 @@ void CollectionFileData::refreshMetadata()
 const std::string& CollectionFileData::getName()
 {
 	if (mDirty) {
-		mCollectionFileName  = Utils::String::removeParenthesis(mSourceFileData->metadata.get("name"));
+		mCollectionFileName = Utils::String::removeParenthesis(mSourceFileData->metadata.get("name"));
 		mCollectionFileName += " [" + Utils::String::toUpper(mSourceFileData->getSystem()->getName()) + "]";
 		mDirty = false;
 	}
-	return mCollectionFileName;
+
+	if (Settings::getInstance()->getBool("CollectionShowSystemInfo"))
+		return mCollectionFileName;
+	return mSourceFileData->metadata.get("name");
 }
 
 // returns Sort Type based on a string description

@@ -144,7 +144,7 @@ void CollectionSystemManager::loadCollectionSystems()
 void CollectionSystemManager::loadEnabledListFromSettings()
 {
 	// we parse the auto collection settings list
-	std::vector<std::string> autoSelected = Utils::String::commaStringToVector(Settings::getInstance()->getString("CollectionSystemsAuto"));
+	std::vector<std::string> autoSelected = Utils::String::delimitedStringToVector(Settings::getInstance()->getString("CollectionSystemsAuto"), ",", true);
 
 	// iterate the map
 	for(std::map<std::string, CollectionSystemData>::iterator it = mAutoCollectionSystemsData.begin() ; it != mAutoCollectionSystemsData.end() ; it++ )
@@ -153,7 +153,7 @@ void CollectionSystemManager::loadEnabledListFromSettings()
 	}
 
 	// we parse the custom collection settings list
-	std::vector<std::string> customSelected = Utils::String::commaStringToVector(Settings::getInstance()->getString("CollectionSystemsCustom"));
+	std::vector<std::string> customSelected = Utils::String::delimitedStringToVector(Settings::getInstance()->getString("CollectionSystemsCustom"), ",", true);
 
 	// iterate the map
 	for(std::map<std::string, CollectionSystemData>::iterator it = mCustomCollectionSystemsData.begin() ; it != mCustomCollectionSystemsData.end() ; it++ )
@@ -284,7 +284,7 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 			trimCollectionCount(rootFolder, LAST_PLAYED_MAX);
 			ViewController::get()->onFileChanged(rootFolder, FILE_METADATA_CHANGED);
 		}
-		else 
+		else
 			ViewController::get()->onFileChanged(rootFolder, FILE_SORTED);
 	}
 }
@@ -292,7 +292,7 @@ void CollectionSystemManager::updateCollectionSystem(FileData* file, CollectionS
 void CollectionSystemManager::trimCollectionCount(FileData* rootFolder, int limit)
 {
 	SystemData* curSys = rootFolder->getSystem();
-	while ((int)rootFolder->getChildren().size() > limit)
+	while ((int)rootFolder->getChildrenListToDisplay().size() > limit)
 	{
 		CollectionFileData* gameToRemove = (CollectionFileData*)rootFolder->getChildrenListToDisplay().back();
 		ViewController::get()->getGameListView(curSys).get()->remove(gameToRemove, false);
@@ -448,6 +448,8 @@ void CollectionSystemManager::exitEditMode()
 	mWindow->setInfoPopup(s);
 	mIsEditingCustom = false;
 	mEditingCollection = "Favorites";
+
+	mEditingCollectionSystemData->system->onMetaDataSavePoint();
 }
 
 // adds or removes a game from a specific collection
@@ -521,6 +523,9 @@ bool CollectionSystemManager::toggleGameInCollection(FileData* file)
 				md->set("favorite", "false");
 			}
 			file->getSourceFileData()->getSystem()->getIndex()->addToIndex(file);
+
+			file->getSourceFileData()->getSystem()->onMetaDataSavePoint();
+
 			refreshCollectionSystems(file->getSourceFileData());
 		}
 		if (adding)
@@ -621,7 +626,8 @@ void CollectionSystemManager::updateCollectionFolderMetadata(SystemData* sys)
 			}
 		}
 
-		desc = "This collection contains " + std::to_string(games_counter) + " games, including " + games_list;
+		desc = "This collection contains " + std::to_string(games_counter) + " game"
+				+ (games_counter == 1 ? "" : "s") + ", including " + games_list;
 
 		FileData* randomGame = sys->getRandomGame();
 
@@ -1031,7 +1037,6 @@ bool CollectionSystemManager::includeFileInAutoCollections(FileData* file)
 	// but for now a simple string comparison is more performant
 	return file->getName() != "kodi" && file->getSystem()->isGameSystem();
 }
-
 
 std::string getCustomCollectionConfigPath(std::string collectionName)
 {
