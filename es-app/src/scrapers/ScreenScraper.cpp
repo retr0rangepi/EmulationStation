@@ -14,7 +14,7 @@ using namespace PlatformIds;
 
 /**
 	List of systems and their IDs from
-	https://www.screenscraper.fr/api/systemesListe.php?devid=xxx&devpassword=yyy&softname=zzz&output=XML
+	https://www.screenscraper.fr/api2/systemesListe.php?devid=xxx&devpassword=yyy&softname=zzz&output=XML
 **/
 const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ THREEDO, 29 },
@@ -22,15 +22,16 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ AMSTRAD_CPC, 65 },
 	{ APPLE_II, 86 },
 	{ ARCADE, 75 },
-	{ ATARI_800, 26 }, // Use ATARI_2600 as an alias for atari 800
+	{ ATARI_800, 43 },
 	{ ATARI_2600, 26 },
 	{ ATARI_5200, 40 },
 	{ ATARI_7800, 41 },
 	{ ATARI_JAGUAR, 27 },
 	{ ATARI_JAGUAR_CD, 171 },
 	{ ATARI_LYNX, 28 },
-	{ ATARI_ST, 42},
-	// missing Atari XE ?
+	{ ATARI_ST, 42 },
+	{ ATARI_XE, 43 },
+	{ BBC_MICRO, 37 },
 	{ COLECOVISION, 48 },
 	{ COMMODORE_64, 66 },
 	{ INTELLIVISION, 115 },
@@ -67,8 +68,12 @@ const std::map<PlatformId, unsigned short> screenscraper_platformid_map{
 	{ SEGA_MEGA_DRIVE, 1 },
 	{ SEGA_SATURN, 22 },
 	{ SEGA_SG1000, 109 },
+	{ SHARP_X1, 220},
 	{ SHARP_X6800, 79},
 	{ SOLARUS, 223 },
+	{ THOMSON_MOTO, 141},
+	{ NEC_PC_8801, 221},
+	{ NEC_PC_9801, 208},
 	{ PLAYSTATION, 57 },
 	{ PLAYSTATION_2, 58 },
 	{ PLAYSTATION_3, 59 },

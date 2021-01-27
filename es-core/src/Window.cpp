@@ -116,38 +116,16 @@ void Window::textInput(const char* text)
 
 void Window::input(InputConfig* config, Input input)
 {
-	if (mScreenSaver) {
-		if(mScreenSaver->isScreenSaverActive() && Settings::getInstance()->getBool("ScreenSaverControls") &&
-		   (Settings::getInstance()->getString("ScreenSaverBehavior") == "random video"))
-		{
-			if(mScreenSaver->getCurrentGame() != NULL && (config->isMappedLike("right", input) || config->isMappedTo("start", input) || config->isMappedTo("select", input)))
-			{
-				if(config->isMappedLike("right", input) || config->isMappedTo("select", input))
-				{
-					if (input.value != 0) {
-						// handle screensaver control
-						mScreenSaver->nextVideo();
-					}
-					return;
-				}
-				else if(config->isMappedTo("start", input) && input.value != 0)
-				{
-					// launch game!
-					cancelScreenSaver();
-					mScreenSaver->launchGame();
-					// to force handling the wake up process
-					mSleeping = true;
-				}
-			}
-		}
+	if (mScreenSaver && mScreenSaver->isScreenSaverActive() && Settings::getInstance()->getBool("ScreenSaverControls")
+		&& inputDuringScreensaver(config, input))
+	{
+		return;
 	}
 
-	if(mSleeping)
+	if (mSleeping)
 	{
-		// wake up
-		mTimeSinceLastInput = 0;
-		cancelScreenSaver();
 		mSleeping = false;
+		mTimeSinceLastInput = 0;
 		onWake();
 		return;
 	}
@@ -156,28 +134,57 @@ void Window::input(InputConfig* config, Input input)
 	if (cancelScreenSaver())
 		return;
 
-	if(config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_g && SDL_GetModState() & KMOD_LCTRL && Settings::getInstance()->getBool("Debug"))
+	bool dbg_keyboard_key_press = Settings::getInstance()->getBool("Debug") && config->getDeviceId() == DEVICE_KEYBOARD && input.value;
+	if (dbg_keyboard_key_press && input.id == SDLK_g && SDL_GetModState() & KMOD_LCTRL)
 	{
 		// toggle debug grid with Ctrl-G
 		Settings::getInstance()->setBool("DebugGrid", !Settings::getInstance()->getBool("DebugGrid"));
 	}
-	else if(config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_t && SDL_GetModState() & KMOD_LCTRL && Settings::getInstance()->getBool("Debug"))
+	else if (dbg_keyboard_key_press && input.id == SDLK_t && SDL_GetModState() & KMOD_LCTRL)
 	{
 		// toggle TextComponent debug view with Ctrl-T
 		Settings::getInstance()->setBool("DebugText", !Settings::getInstance()->getBool("DebugText"));
 	}
-	else if(config->getDeviceId() == DEVICE_KEYBOARD && input.value && input.id == SDLK_i && SDL_GetModState() & KMOD_LCTRL && Settings::getInstance()->getBool("Debug"))
+	else if (dbg_keyboard_key_press && input.id == SDLK_i && SDL_GetModState() & KMOD_LCTRL)
 	{
 		// toggle TextComponent debug view with Ctrl-I
 		Settings::getInstance()->setBool("DebugImage", !Settings::getInstance()->getBool("DebugImage"));
 	}
-	else
+	else if (peekGui())
 	{
-		if (peekGui())
+		this->peekGui()->input(config, input); // this is where the majority of inputs will be consumed: the GuiComponent Stack
+	}
+}
+
+bool Window::inputDuringScreensaver(InputConfig* config, Input input)
+{
+	bool input_consumed = false;
+	std::string screensaver_type = Settings::getInstance()->getString("ScreenSaverBehavior");
+
+	if (screensaver_type == "random video" || screensaver_type == "slideshow")
+	{
+		bool is_select_input = config->isMappedLike("right", input) || config->isMappedTo("select", input);
+		bool is_start_input = config->isMappedTo("start", input);
+
+		if (is_select_input)
 		{
-			this->peekGui()->input(config, input); // this is where the majority of inputs will be consumed: the GuiComponent Stack
+			if (input.value) {
+				mScreenSaver->nextMediaItem();
+				// user input resets sleep time counter
+				mTimeSinceLastInput = 0;
+			}
+			input_consumed = true;
+		}
+		else if (is_start_input)
+		{
+			bool slideshow_custom_images = Settings::getInstance()->getBool("SlideshowScreenSaverCustomImageSource");
+			if (!slideshow_custom_images)
+			{
+				mScreenSaver->launchGame();
+			}
 		}
 	}
+	return input_consumed;
 }
 
 void Window::update(int deltaTime)
@@ -271,13 +278,10 @@ void Window::render()
 
 	if(mTimeSinceLastInput >= screensaverTime && screensaverTime != 0)
 	{
-		if (!isProcessing() && mAllowSleep && (!mScreenSaver || mScreenSaver->allowSleep()))
-		{
-			// go to sleep
-			if (mSleeping == false) {
-				mSleeping = true;
-				onSleep();
-			}
+		unsigned int systemSleepTime = (unsigned int)Settings::getInstance()->getInt("SystemSleepTime");
+		if(!isProcessing() && mAllowSleep && systemSleepTime != 0 && mTimeSinceLastInput >= systemSleepTime) {
+			mSleeping = true;
+			onSleep();
 		}
 	}
 }
@@ -400,7 +404,19 @@ void Window::setHelpPrompts(const std::vector<HelpPrompt>& prompts, const HelpSt
 
 void Window::onSleep()
 {
-	Scripting::fireEvent("sleep");
+	if (Settings::getInstance()->getBool("Windowed")) {
+		LOG(LogInfo) << "running windowed. No further onSleep() processing.";
+		return;
+	}
+
+	int gotErrors = Scripting::fireEvent("sleep");
+
+	if (gotErrors == 0 && mScreenSaver && mRenderScreenSaver)
+	{
+		mScreenSaver->stopScreenSaver();
+		mRenderScreenSaver = false;
+		mScreenSaver->resetCounts();
+	}
 }
 
 void Window::onWake()
@@ -423,6 +439,7 @@ void Window::startScreenSaver()
 
 		mScreenSaver->startScreenSaver();
 		mRenderScreenSaver = true;
+		Scripting::fireEvent("screensaver-start");
 	}
 }
 
@@ -433,6 +450,7 @@ bool Window::cancelScreenSaver()
 		mScreenSaver->stopScreenSaver();
 		mRenderScreenSaver = false;
 		mScreenSaver->resetCounts();
+		Scripting::fireEvent("screensaver-stop");
 
 		// Tell the GUI components the screensaver has stopped
 		for(auto i = mGuiStack.cbegin(); i != mGuiStack.cend(); i++)

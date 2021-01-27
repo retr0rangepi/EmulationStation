@@ -46,7 +46,7 @@ void TextureDataManager::remove(const TextureResource* key)
 	}
 }
 
-std::shared_ptr<TextureData> TextureDataManager::get(const TextureResource* key)
+std::shared_ptr<TextureData> TextureDataManager::get(const TextureResource* key, bool enableLoading)
 {
 	// If it's in the cache then we want to remove it from it's current location and
 	// move it to the top
@@ -63,7 +63,8 @@ std::shared_ptr<TextureData> TextureDataManager::get(const TextureResource* key)
 		mTextureLookup[key] = mTextures.cbegin();
 
 		// Make sure it's loaded or queued for loading
-		load(tex);
+		if (enableLoading && !tex->isLoaded())
+			load(tex);
 	}
 	return tex;
 }
@@ -106,20 +107,24 @@ void TextureDataManager::load(std::shared_ptr<TextureData> tex, bool block)
 	if (tex->isLoaded())
 		return;
 	// Not loaded. Make sure there is room
-	size_t size = TextureResource::getTotalMemUsage();
 	size_t max_texture = (size_t)Settings::getInstance()->getInt("MaxVRAM") * 1024 * 1024;
 
-	for (auto it = mTextures.crbegin(); it != mTextures.crend(); ++it)
+	// if max_texture is 0, then texture memory should be considered unlimited
+	if (max_texture > 0)
 	{
-		if (size < max_texture)
-			break;
-		//size -= (*it)->getVRAMUsage();
-		(*it)->releaseVRAM();
-		(*it)->releaseRAM();
-		// It may be already in the loader queue. In this case it wouldn't have been using
-		// any VRAM yet but it will be. Remove it from the loader queue
-		mLoader->remove(*it);
-		size = TextureResource::getTotalMemUsage();
+		size_t size = TextureResource::getTotalMemUsage();
+		for (auto it = mTextures.crbegin(); it != mTextures.crend(); ++it)
+		{
+			if (size < max_texture)
+				break;
+			//size -= (*it)->getVRAMUsage();
+			(*it)->releaseVRAM();
+			(*it)->releaseRAM();
+			// It may be already in the loader queue. In this case it wouldn't have been using
+			// any VRAM yet but it will be. Remove it from the loader queue
+			mLoader->remove(*it);
+			size = TextureResource::getTotalMemUsage();
+		}
 	}
 	if (!block)
 		mLoader->load(tex);

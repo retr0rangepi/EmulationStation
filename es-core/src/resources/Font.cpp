@@ -76,6 +76,7 @@ Font::Font(int size, const std::string& path) : mSize(size), mPath(path)
 {
 	assert(mSize > 0);
 
+	mLoaded = true;
 	mMaxGlyphHeight = 0;
 
 	if(!sLibrary)
@@ -90,17 +91,28 @@ Font::Font(int size, const std::string& path) : mSize(size), mPath(path)
 
 Font::~Font()
 {
-	unload(ResourceManager::getInstance());
+	unload();
 }
 
-void Font::reload(std::shared_ptr<ResourceManager>& /*rm*/)
+void Font::reload()
 {
+	if (mLoaded)
+		return;
+
 	rebuildTextures();
+	mLoaded = true;
 }
 
-void Font::unload(std::shared_ptr<ResourceManager>& /*rm*/)
+bool Font::unload()
 {
-	unloadTextures();
+	if (mLoaded)
+	{
+		unloadTextures();
+		mLoaded = false;
+		return true;
+	}
+
+	return false;
 }
 
 std::shared_ptr<Font> Font::get(int size, const std::string& path)
@@ -400,7 +412,7 @@ void Font::renderTextCache(TextCache* cache)
 		auto vertexList = *it;
 
 		Renderer::bindTexture(*it->textureIdPtr);
-		Renderer::drawTriangleStrips(&it->verts[0], it->verts.size());
+		Renderer::drawTriangleStrips(&it->verts[0], (int)it->verts.size());
 	}
 }
 

@@ -21,8 +21,10 @@ namespace PlatformIds
 		"atarijaguar",
 		"atarijaguarcd",
 		"atarixe",
+		"bbcmicro",
 		"colecovision",
 		"c64", // commodore 64
+		"daphne",
 		"intellivision",
 		"macintosh",
 		"xbox",
@@ -64,8 +66,12 @@ namespace PlatformIds
 		"psp", // playstation portable
 		"snes", // super nintendo entertainment system
 		"scummvm",
-		"x6800",
+		"x1",
+		"x68000",
 		"solarus",
+		"moto", // Thomson MO/TO
+		"pc88", // NEC PC-8801
+		"pc98", // NEC PC-9801
 		"pcengine", // (aka turbografx-16) HuCards only
 		"pcenginecd", // (aka turbografx-16) CD-ROMs only
 		"wonderswan",
